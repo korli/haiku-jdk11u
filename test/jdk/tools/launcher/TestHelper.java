@@ -91,6 +91,8 @@ public class TestHelper {
             System.getProperty("os.name", "unknown").startsWith("Linux");
     static final boolean isAIX =
             System.getProperty("os.name", "unknown").startsWith("AIX");
+    static final boolean isHaiku =
+            System.getProperty("os.name", "unknown").startsWith("Haiku");
     static final String LIBJVM = isWindows
                         ? "jvm.dll"
                         : "libjvm" + (isMacOSX ? ".dylib" : ".so");

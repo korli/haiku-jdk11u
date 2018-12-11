@@ -26,7 +26,7 @@
 #include "jni.h"
 #include "color.h"
 
-#if !defined(HEADLESS) && !defined(MACOSX)
+#if !defined(HEADLESS) && !defined(MACOSX) && !defined(__HAIKU__)
 typedef struct {
     ImgConvertData cvdata;      /* The data needed by ImgConvertFcn's */
     struct Hsun_awt_image_ImageRepresentation *hJavaObject;     /* backptr */

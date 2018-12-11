@@ -131,8 +131,10 @@ class SocketOptionRegistry {
 
 #ifdef AF_INET6
             // IPPROTO_IPV6 is 41
+#ifndef __HAIKU__
             map.put(new RegistryKey(StandardSocketOptions.PREFIX_IP_TOS,
                 StandardProtocolFamily.INET6), new OptionKey(41, IPV6_TCLASS));
+#endif
             map.put(new RegistryKey(StandardSocketOptions.PREFIX_IP_MULTICAST_IF,
                 StandardProtocolFamily.INET6), new OptionKey(41, IPV6_MULTICAST_IF));
             map.put(new RegistryKey(StandardSocketOptions.PREFIX_IP_MULTICAST_TTL,

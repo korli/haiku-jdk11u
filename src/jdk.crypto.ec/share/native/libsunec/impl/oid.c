@@ -39,9 +39,9 @@
 #include <sys/types.h>
 
 #ifndef _WIN32
-#if !defined(__linux__) && !defined(_ALLBSD_SOURCE)
+#if !defined(__linux__) && !defined(_ALLBSD_SOURCE) && !defined(__HAIKU__)
 #include <sys/systm.h>
-#endif /* __linux__ || _ALLBSD_SOURCE */
+#endif /* __linux__ || _ALLBSD_SOURCE || __HAIKU__ */
 #include <sys/param.h>
 #endif /* _WIN32 */
 

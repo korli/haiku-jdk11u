@@ -294,7 +294,7 @@ public abstract class SunDropTargetContextPeer implements DropTargetContextPeer,
         return local != null || getJVMLocalSourceTransferable() != null;
     }
 
-    private int handleEnterMessage(final Component component,
+    protected int handleEnterMessage(final Component component,
                                    final int x, final int y,
                                    final int dropAction,
                                    final int actions, final long[] formats,
@@ -353,7 +353,7 @@ public abstract class SunDropTargetContextPeer implements DropTargetContextPeer,
      * upcall to handle exit messages
      */
 
-    private void handleExitMessage(final Component component,
+    protected void handleExitMessage(final Component component,
                                    final long nativeCtxt) {
         /*
          * Even though the return value is irrelevant for this event, it is
@@ -423,7 +423,7 @@ public abstract class SunDropTargetContextPeer implements DropTargetContextPeer,
         }
     }
 
-    private int handleMotionMessage(final Component component,
+    protected int handleMotionMessage(final Component component,
                                     final int x, final int y,
                                     final int dropAction,
                                     final int actions, final long[] formats,
@@ -498,7 +498,7 @@ public abstract class SunDropTargetContextPeer implements DropTargetContextPeer,
      * upcall to handle the Drop message
      */
 
-    private void handleDropMessage(final Component component,
+    protected void handleDropMessage(final Component component,
                                    final int x, final int y,
                                    final int dropAction, final int actions,
                                    final long[] formats,

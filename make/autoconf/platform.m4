@@ -190,6 +190,10 @@ AC_DEFUN([PLATFORM_EXTRACT_VARS_FROM_OS],
       VAR_OS=aix
       VAR_OS_TYPE=unix
       ;;
+    *haiku*)
+      VAR_OS=haiku
+      VAR_OS_TYPE=unix
+      ;;
     *)
       AC_MSG_ERROR([unsupported operating system $1])
       ;;
@@ -504,6 +508,9 @@ AC_DEFUN([PLATFORM_SET_RELEASE_FILE_OS_VALUES],
   fi
   if test "x$OPENJDK_TARGET_OS" = "xaix"; then
     RELEASE_FILE_OS_NAME="AIX"
+  fi
+  if test "x$OPENJDK_TARGET_OS" = "xhaiku"; then
+    RELEASE_FILE_OS_NAME="Haiku"
   fi
   RELEASE_FILE_OS_ARCH=${OPENJDK_TARGET_CPU}
 

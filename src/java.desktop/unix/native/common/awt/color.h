@@ -28,7 +28,7 @@
 #include "awt.h"
 #include "colordata.h"
 
-#if !defined(HEADLESS) && !defined(MACOSX)
+#if !defined(HEADLESS) && !defined(MACOSX) && !defined(__HAIKU__)
 typedef struct {
     unsigned int Depth;
     XPixmapFormatValues wsImageFormat;

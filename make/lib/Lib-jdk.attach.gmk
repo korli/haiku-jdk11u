@@ -43,6 +43,7 @@ $(eval $(call SetupJdkLibrary, BUILD_LIBATTACH, \
         $(call SET_SHARED_LIBRARY_ORIGIN), \
     LIBS := $(JDKLIB_LIBS), \
     LIBS_solaris := -ldoor, \
+    LIBS_haiku := -lnetwork, \
     LIBS_windows := $(WIN_JAVA_LIB) advapi32.lib psapi.lib, \
 ))
 
