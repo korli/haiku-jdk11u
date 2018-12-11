@@ -435,6 +435,14 @@
 #define NOT_BSD(code) code
 #endif
 
+#ifdef HAIKU
+#define HAIKU_ONLY(code) code
+#define NOT_HAIKU(code)
+#else
+#define HAIKU_ONLY(code)
+#define NOT_HAIKU(code) code
+#endif
+
 #ifdef _WIN64
 #define WIN64_ONLY(code) code
 #define NOT_WIN64(code)

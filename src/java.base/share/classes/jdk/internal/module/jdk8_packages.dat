@@ -1149,6 +1149,7 @@ sun.dc
 sun.dc.path
 sun.dc.pr
 sun.font
+sun.hawt
 sun.instrument
 sun.invoke
 sun.invoke.empty

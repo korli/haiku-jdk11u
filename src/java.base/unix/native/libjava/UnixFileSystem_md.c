@@ -63,7 +63,7 @@
   #define NAME_MAX MAXNAMLEN
 #endif
 
-#if defined(_ALLBSD_SOURCE)
+#if defined(_ALLBSD_SOURCE) || defined(__HAIKU__)
   #define dirent64 dirent
   #define readdir64 readdir
   #define stat64 stat

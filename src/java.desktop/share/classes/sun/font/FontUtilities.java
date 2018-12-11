@@ -50,6 +50,8 @@ public final class FontUtilities {
 
     public static boolean isMacOSX;
 
+    public static boolean isHaiku;
+
     public static boolean useJDKScaler;
 
     public static boolean isWindows;
@@ -71,6 +73,8 @@ public final class FontUtilities {
                 isLinux = osName.startsWith("Linux");
 
                 isMacOSX = osName.contains("OS X"); // TODO: MacOSX
+
+                isHaiku = osName.startsWith("Haiku");
 
                 /* If set to "jdk", use the JDK's scaler rather than
                  * the platform one. This may be a no-op on platforms where

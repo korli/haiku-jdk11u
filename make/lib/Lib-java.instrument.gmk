@@ -50,6 +50,8 @@ $(eval $(call SetupJdkLibrary, BUILD_LIBINSTRUMENT, \
         -L$(call FindLibDirForModule, java.base)/jli, \
     LDFLAGS_solaris := $(call SET_SHARED_LIBRARY_ORIGIN,/jli) \
         -L$(call FindLibDirForModule, java.base)/jli, \
+    LDFLAGS_haiku := $(call SET_SHARED_LIBRARY_ORIGIN,/jli) \
+        -L$(call FindLibDirForModule, java.base)/jli, \
     LDFLAGS_macosx := $(call SET_SHARED_LIBRARY_ORIGIN,/jli) \
         -L$(call FindLibDirForModule, java.base)/jli, \
     LDFLAGS_aix := -L$(SUPPORT_OUTPUTDIR)/native/java.base, \
@@ -58,6 +60,7 @@ $(eval $(call SetupJdkLibrary, BUILD_LIBINSTRUMENT, \
     LIBS_linux := -ljli $(LIBDL), \
     LIBS_solaris := -ljli $(LIBDL), \
     LIBS_aix := -liconv -ljli_static $(LIBDL), \
+    LIBS_haiku := -liconv -ljli, \
     LIBS_macosx := -ljli -liconv -framework Cocoa -framework Security \
         -framework ApplicationServices, \
     LIBS_windows := jvm.lib $(WIN_JAVA_LIB) advapi32.lib \

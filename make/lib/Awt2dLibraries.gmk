@@ -139,7 +139,7 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
       #
 endif
 
-ifneq ($(filter $(OPENJDK_TARGET_OS), solaris linux macosx aix), )
+ifneq ($(filter $(OPENJDK_TARGET_OS), solaris linux macosx aix haiku), )
   LIBAWT_EXFILES += awt_Font.c CUPSfuncs.c fontpath.c X11Color.c
 endif
 
@@ -248,6 +248,7 @@ $(eval $(call SetupJdkLibrary, BUILD_LIBAWT, \
         -framework JavaRuntimeSupport \
         -framework ApplicationServices \
         -framework AudioToolbox, \
+    LIBS_haiku := -ljvm -ljava, \
     LIBS_windows := kernel32.lib user32.lib gdi32.lib winspool.lib \
         imm32.lib ole32.lib uuid.lib shell32.lib \
         comdlg32.lib winmm.lib comctl32.lib shlwapi.lib \
@@ -269,7 +270,7 @@ TARGETS += $(BUILD_LIBAWT)
 
 ################################################################################
 
-ifeq ($(findstring $(OPENJDK_TARGET_OS), windows macosx), )
+ifeq ($(findstring $(OPENJDK_TARGET_OS), windows macosx haiku), )
   ifeq ($(ENABLE_HEADLESS_ONLY), false)
 
     LIBAWT_XAWT_EXTRA_SRC := \
@@ -440,8 +441,8 @@ TARGETS += $(BUILD_LIBJAVAJPEG)
 
 ################################################################################
 
-# Mac and Windows only use the native AWT lib, do not build libawt_headless
-ifeq ($(findstring $(OPENJDK_TARGET_OS), windows macosx),)
+# Mac, Windows and Haiku only use the native AWT lib, do not build libawt_headless
+ifeq ($(findstring $(OPENJDK_TARGET_OS), windows macosx haiku),)
 
   LIBAWT_HEADLESS_EXTRA_SRC := \
       common/font \
@@ -538,7 +539,7 @@ ifneq ($(OPENJDK_TARGET_OS), windows)
                       -DHAVE_SYSCONF -DHAVE_SYS_MMAN_H -DHAVE_UNISTD_H \
                       -DHB_NO_PRAGMA_GCC_DIAGNOSTIC
 endif
-ifneq (, $(findstring $(OPENJDK_TARGET_OS), linux macosx))
+ifneq (, $(findstring $(OPENJDK_TARGET_OS), linux macosx haiku))
   HARFBUZZ_CFLAGS += -DHAVE_INTEL_ATOMIC_PRIMITIVES
 endif
 ifeq ($(OPENJDK_TARGET_OS), solaris)
@@ -576,7 +577,7 @@ ifeq ($(OPENJDK_TARGET_OS), windows)
   LIBFONTMANAGER_EXCLUDE_FILES += X11FontScaler.c \
       X11TextRenderer.c
   LIBFONTMANAGER_OPTIMIZATION := HIGHEST
-else ifeq ($(OPENJDK_TARGET_OS), macosx)
+else ifneq ($(filter macosx haiku, $(OPENJDK_TARGET_OS)), )
   LIBFONTMANAGER_EXCLUDE_FILES += X11FontScaler.c \
       X11TextRenderer.c \
       fontpath.c \
@@ -612,7 +613,7 @@ $(eval $(call SetupJdkLibrary, BUILD_LIBFONTMANAGER, \
     DISABLED_WARNINGS_gcc := sign-compare int-to-pointer-cast \
         type-limits missing-field-initializers implicit-fallthrough strict-aliasing, \
     DISABLED_WARNINGS_CXX_gcc := reorder delete-non-virtual-dtor strict-overflow \
-        maybe-uninitialized, \
+        maybe-uninitialized implicit-fallthrough, \
     DISABLED_WARNINGS_clang := unused-value incompatible-pointer-types \
         tautological-constant-out-of-range-compare int-to-pointer-cast, \
     DISABLED_WARNINGS_C_solstudio = \
@@ -699,6 +700,9 @@ else # OPENJDK_TARGET_OS not windows
 
   ifeq ($(OPENJDK_TARGET_OS), macosx)
     JAWT_LIBS := -lawt_lwawt
+  else ifeq ($(OPENJDK_TARGET_OS), haiku)
+    JAWT_FILES := HaikuJawt.cpp
+    JAWT_LIBS := -lawt_lwawt
   else
     JAWT_LIBS :=
     ifneq ($(OPENJDK_TARGET_OS), solaris)
@@ -739,7 +743,7 @@ else # OPENJDK_TARGET_OS not windows
     $(BUILD_LIBJAWT): $(INSTALL_LIBRARIES_HERE)/$(LIBRARY_PREFIX)awt_headless$(SHARED_LIBRARY_SUFFIX)
   endif
 
-  ifeq ($(OPENJDK_TARGET_OS), macosx)
+  ifneq (,$(findstring $(OPENJDK_TARGET_OS), macosx haiku))
     $(BUILD_LIBJAWT): $(INSTALL_LIBRARIES_HERE)/$(LIBRARY_PREFIX)awt_lwawt$(SHARED_LIBRARY_SUFFIX)
   endif
 
@@ -792,8 +796,8 @@ ifeq ($(ENABLE_HEADLESS_ONLY), false)
     LIBSPLASHSCREEN_EXTRA_SRC += java.base:libzip/zlib
   endif
 
-  ifeq ($(OPENJDK_TARGET_OS), macosx)
-    # libsplashscreen on macosx do not use the unix code
+  ifneq ($(filter macosx haiku, $(OPENJDK_TARGET_OS)), )
+    # libsplashscreen on macosx and haiku do not use the unix code
     LIBSPLASHSCREEN_EXCLUDE_SRC_PATTERNS := unix
   endif
 
@@ -813,6 +817,10 @@ ifeq ($(ENABLE_HEADLESS_ONLY), false)
 
   else ifeq ($(OPENJDK_TARGET_OS), windows)
     LIBSPLASHSCREEN_CFLAGS += -DWITH_WIN32
+  else ifeq ($(OPENJDK_TARGET_OS), haiku)
+    LIBSPLASHSCREEN_CFLAGS += -DWITH_HAIKU \
+        -I$(TOPDIR)/src/java.desktop/haiku/native/sun/awt/splashscreen \
+        -I$(TOPDIR)/src/java.desktop/haiku/native/libhaikuapp
   else
     LIBSPLASHSCREEN_CFLAGS += -DWITH_X11 $(X_CFLAGS)
   endif
@@ -826,6 +834,9 @@ ifeq ($(ENABLE_HEADLESS_ONLY), false)
         -framework Foundation \
         -framework Cocoa \
         -framework JavaNativeFoundation
+  else ifeq ($(OPENJDK_TARGET_OS), haiku)
+    LIBSPLASHSCREEN_LDFLAGS := -L$(INSTALL_LIBRARIES_HERE)
+    LIBSPLASHSCREEN_LIBS += -lhaikuapp -lbe -lstdc++ -liconv
   else ifeq ($(OPENJDK_TARGET_OS), windows)
     LIBSPLASHSCREEN_LIBS += kernel32.lib user32.lib gdi32.lib delayimp.lib $(WIN_JAVA_LIB) jvm.lib
   else
@@ -838,15 +849,23 @@ ifeq ($(ENABLE_HEADLESS_ONLY), false)
       java.base:libjava \
       #
 
+  LIBSPLASHSCREEN_LANG := C
+
+  ifeq ($(OPENJDK_TARGET_OS), haiku)
+    LIBSPLASHSCREEN_LANG := C++
+  endif
+
   $(eval $(call SetupJdkLibrary, BUILD_LIBSPLASHSCREEN, \
       NAME := splashscreen, \
       EXTRA_SRC := $(LIBSPLASHSCREEN_EXTRA_SRC), \
       EXCLUDE_SRC_PATTERNS := $(LIBSPLASHSCREEN_EXCLUDE_SRC_PATTERNS), \
       EXCLUDE_FILES := imageioJPEG.c jpegdecoder.c pngtest.c, \
       EXCLUDES := $(LIBSPLASHSCREEN_EXCLUDES), \
+      LANG := $(LIBSPLASHSCREEN_LANG), \
       OPTIMIZATION := LOW, \
       CFLAGS := $(CFLAGS_JDKLIB) $(LIBSPLASHSCREEN_CFLAGS) \
           $(GIFLIB_CFLAGS) $(LIBJPEG_CFLAGS) $(PNG_CFLAGS) $(LIBZ_CFLAGS), \
+      CXXFLAGS := $(CXXFLAGS_JDKLIB) $(LIBSPLASHSCREEN_CFLAGS), \
       EXTRA_HEADER_DIRS := $(LIBSPLASHSCREEN_HEADER_DIRS), \
       DISABLED_WARNINGS_gcc := sign-compare type-limits unused-result \
           maybe-uninitialized shift-negative-value implicit-fallthrough, \
@@ -867,6 +886,8 @@ ifeq ($(ENABLE_HEADLESS_ONLY), false)
 
   ifeq ($(OPENJDK_TARGET_OS), macosx)
     $(BUILD_LIBSPLASHSCREEN): $(call FindLib, $(MODULE), osxapp)
+  else ifeq ($(OPENJDK_TARGET_OS), haiku)
+    $(BUILD_LIBSPLASHSCREEN): $(call FindLib, $(MODULE), haikuapp)
   endif
 
 endif
@@ -934,6 +955,83 @@ ifeq ($(OPENJDK_TARGET_OS), macosx)
   $(BUILD_LIBAWT_LWAWT): $(BUILD_LIBMLIB_IMAGE)
 
   $(BUILD_LIBAWT_LWAWT): $(call FindLib, $(MODULE), osxapp)
+
+  $(BUILD_LIBAWT_LWAWT): $(call FindLib, java.base, java)
+
+endif
+
+##########################################################################################
+
+ifeq ($(OPENJDK_TARGET_OS), haiku)
+
+  LIBAWT_LWAWT_FILES := \
+      AwtApplication.cpp \
+      ContentView.cpp \
+      Drawable.cpp \
+      HaikuClipboard.cpp \
+      HaikuCursorManager.cpp \
+      HaikuDesktopPeer.cpp \
+      HaikuDragSourceContextPeer.cpp \
+      HaikuDropTargetContextPeer.cpp \
+      HaikuFileDialog.cpp \
+      HaikuFontManager.cpp \
+      HaikuGraphicsConfig.cpp \
+      HaikuGraphicsDevice.cpp \
+      HaikuGraphicsEnvironment.cpp \
+      HaikuJawt.cpp \
+      HaikuMenuComponent.cpp \
+      HaikuMouseInfo.cpp \
+      HaikuPlatformWindow.cpp \
+      HaikuRobot.cpp \
+      HaikuToolkit.cpp \
+      HaikuTrayIcon.cpp \
+      HaikuWindowSurfaceData.cpp \
+      Utilities.cpp \
+      \
+      AccelGlyphCache.c
+
+  LIBAWT_LWAWT_DIRS := \
+      $(TOPDIR)/src/java.desktop/haiku/native/libawt_lwawt/awt \
+      $(TOPDIR)/src/java.desktop/haiku/native/libawt_lwawt/font \
+      $(TOPDIR)/src/java.desktop/share/native/common/font
+
+  $(eval $(call SetupNativeCompilation,BUILD_LIBAWT_LWAWT, \
+      LIBRARY := awt_lwawt, \
+      OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
+      SRC := $(LIBAWT_LWAWT_DIRS), \
+      LANG := C++, \
+      INCLUDE_FILES := $(LIBAWT_LWAWT_FILES), \
+      OPTIMIZATION := LOW, \
+      DISABLED_WARNINGS_gcc := deprecated, \
+      CFLAGS := $(CFLAGS_JDKLIB) \
+          $(foreach dir, $(LIBAWT_LWAWT_DIRS), -I$(dir)) \
+          -I$(SUPPORT_OUTPUTDIR)/headers/java.desktop \
+          -I$(TOPDIR)/src/java.desktop/haiku/native/include \
+          -I$(TOPDIR)/src/java.desktop/haiku/native/libhaikuapp \
+          -I$(TOPDIR)/src/java.desktop/share/native/common/java2d \
+          -I$(TOPDIR)/src/java.desktop/share/native/common/java2d \
+          -I$(TOPDIR)/src/java.desktop/share/native/common/awt/debug \
+          -I$(TOPDIR)/src/java.desktop/share/native/include \
+          -I$(TOPDIR)/src/java.desktop/share/native/libawt/awt/image \
+          -I$(TOPDIR)/src/java.desktop/share/native/libawt/awt/image/cvutils \
+          -I$(TOPDIR)/src/java.desktop/share/native/libawt/java2d/loops \
+          -I$(TOPDIR)/src/java.desktop/share/native/libawt/java2d/pipe \
+          -I$(TOPDIR)/src/java.desktop/share/native/libawt/java2d, \
+      LDFLAGS := $(LDFLAGS_JDKLIB) \
+          $(call SET_SHARED_LIBRARY_ORIGIN) \
+          -L$(INSTALL_LIBRARIES_HERE), \
+      LIBS := -lawt -lmlib_image -lhaikuapp -ljvm \
+          -ljava -lbe -ltracker -lstdc++, \
+      OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libawt_lwawt, \
+      DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
+
+  TARGETS += $(BUILD_LIBAWT_LWAWT)
+
+  $(BUILD_LIBAWT_LWAWT): $(BUILD_LIBAWT)
+
+  $(BUILD_LIBAWT_LWAWT): $(BUILD_LIBMLIB_IMAGE)
+
+  $(BUILD_LIBAWT_LWAWT): $(BUILD_LIBHAIKUAPP)
 
   $(BUILD_LIBAWT_LWAWT): $(call FindLib, java.base, java)
 

@@ -97,7 +97,7 @@ libdir=${TESTCLASSES}
 is_windows=false
 is_cygwin=false
 case `uname -s` in 
-  SunOS|Linux|AIX)
+  SunOS|Linux|AIX|Haiku)
     xx=`find ${jreloc}/lib -name libdt_socket.so`
     libloc=`dirname ${xx}`
     ;;
@@ -164,6 +164,14 @@ elif [ -f ${libloc}/libdt_socket.so ] ; then
         fi
         export LIBPATH
         echo LIBPATH=${LIBPATH}
+    elif [ "$os" = "Haiku" ] ; then
+        if [ "${LIBRARY_PATH}" = "" ] ; then
+            LIBRARY_PATH=${libdir}
+        else
+            LIBRARY_PATH=${LIBRARY_PATH}:${libdir}
+        fi
+        export LIBRARY_PATH
+        echo LIBRARY_PATH=${LIBRARY_PATH}
     else
         if [ "${LD_LIBRARY_PATH}" = "" ] ; then
             LD_LIBRARY_PATH=${libdir}
