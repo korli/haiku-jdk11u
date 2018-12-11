@@ -115,6 +115,9 @@ typedef struct Splash
     pthread_mutex_t lock;
     int controlpipe[2];
     NSWindow * window;
+#elif defined(WITH_HAIKU)
+    pthread_mutex_t lock;
+    void* window;
 #endif
 } Splash;
 

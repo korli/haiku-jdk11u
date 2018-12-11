@@ -280,7 +280,7 @@ NET_GetFileDescriptorID(JNIEnv *env)
     return (*env)->GetFieldID(env, cls, "fd", "I");
 }
 
-#if defined(DONT_ENABLE_IPV6)
+#if defined(DONT_ENABLE_IPV6) || defined (__HAIKU__)
 jint  IPv6_supported()
 {
     return JNI_FALSE;

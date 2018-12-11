@@ -58,6 +58,9 @@ JNIEXPORT jboolean JNICALL
 Java_java_nio_MappedByteBuffer_isLoaded0(JNIEnv *env, jobject obj, jlong address,
                                          jlong len, jint numPages)
 {
+#ifdef __HAIKU__
+    return JNI_FALSE;
+#else
     jboolean loaded = JNI_TRUE;
     int result = 0;
     int i = 0;
@@ -100,6 +103,7 @@ Java_java_nio_MappedByteBuffer_isLoaded0(JNIEnv *env, jobject obj, jlong address
     }
     free(vec);
     return loaded;
+#endif
 }
 
 
@@ -107,11 +111,13 @@ JNIEXPORT void JNICALL
 Java_java_nio_MappedByteBuffer_load0(JNIEnv *env, jobject obj, jlong address,
                                      jlong len)
 {
+#ifndef __HAIKU__
     char *a = (char *)jlong_to_ptr(address);
     int result = madvise((caddr_t)a, (size_t)len, MADV_WILLNEED);
     if (result == -1) {
         JNU_ThrowIOExceptionWithLastError(env, "madvise failed");
     }
+#endif
 }
 
 

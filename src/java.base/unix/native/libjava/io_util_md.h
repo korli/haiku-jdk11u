@@ -74,7 +74,7 @@ FD handleOpen(const char *path, int oflag, int mode);
 #define IO_SetLength handleSetLength
 #define IO_GetLength handleGetLength
 
-#ifdef _ALLBSD_SOURCE
+#if defined(_ALLBSD_SOURCE) || defined(__HAIKU__)
 #define open64 open
 #define fstat64 fstat
 #define stat64 stat
