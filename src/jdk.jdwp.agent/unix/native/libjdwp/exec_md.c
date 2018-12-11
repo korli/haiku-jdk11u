@@ -30,7 +30,7 @@
 #include "sys.h"
 #include "util.h"
 
-#if defined(LINUX) || defined(_ALLBSD_SOURCE) || defined(AIX)
+#if defined(LINUX) || defined(_ALLBSD_SOURCE) || defined(AIX) || defined(__HAIKU__)
   /* Linux, BSD, AIX */
   #define FORK() fork()
 #else

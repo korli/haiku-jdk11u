@@ -1390,7 +1390,7 @@ verify_opcode_operands(context_type *context, unsigned int inumber, int offset)
     case JVM_OPC_invokedynamic:
         CCerror(context,
                 "invokedynamic bytecode is not supported in this class file version");
-
+        /* FALLTHROUGH */
     case JVM_OPC_instanceof:
     case JVM_OPC_checkcast:
     case JVM_OPC_new:

@@ -38,6 +38,8 @@ class Util {
         String osname = System.getProperty("os.name");
         if (osname.startsWith("Windows"))
             return false;
+        if (osname.startsWith("Haiku"))
+            return true;
 
         return (new File("/etc/passwd")).canWrite();
     }

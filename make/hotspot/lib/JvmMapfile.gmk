@@ -130,6 +130,18 @@ else ifeq ($(OPENJDK_TARGET_OS), windows)
         if ($$7 ~ /??_7.*@@6B@/ && $$7 !~ /type_info/) print $$7; \
       }'
 
+else ifeq ($(OPENJDK_TARGET_OS), haiku)
+  DUMP_SYMBOLS_CMD := $(NM) --defined-only *.o
+  ifneq ($(FILTER_SYMBOLS_PATTERN), )
+    FILTER_SYMBOLS_PATTERN := $(FILTER_SYMBOLS_PATTERN)|
+  endif
+  FILTER_SYMBOLS_PATTERN := $(FILTER_SYMBOLS_PATTERN)^_ZTV|^gHotSpotVM|^UseSharedSpaces$$
+  FILTER_SYMBOLS_PATTERN := $(FILTER_SYMBOLS_PATTERN)|^_ZN9Arguments17SharedArchivePathE$$
+  FILTER_SYMBOLS_AWK_SCRIPT := \
+      '{ \
+        if ($$3 ~ /$(FILTER_SYMBOLS_PATTERN)/) print $$3; \
+      }'
+
 else
   $(error Unknown target OS $(OPENJDK_TARGET_OS) in JvmMapfile.gmk)
 endif
