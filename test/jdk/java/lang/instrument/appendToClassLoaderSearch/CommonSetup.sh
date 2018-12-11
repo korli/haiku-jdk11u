@@ -51,6 +51,10 @@ case "$OS" in
     PS=":"
     FS="/"
     ;;
+  Haiku )
+    PS=":"
+    FS="/"
+    ;;
   Windows*)
     PS=";"
     OS="Windows"

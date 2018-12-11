@@ -63,6 +63,9 @@ public final class PortConfig {
                         // /usr/sbin/no -a | fgrep ephemeral
                         defaultLower = 32768;
                         defaultUpper = 65535;
+                    } else if (os.startsWith("Haiku")) {
+                        defaultLower = 32768;
+                        defaultUpper = 65535;
                     } else {
                         throw new InternalError(
                             "sun.net.PortConfig: unknown OS");

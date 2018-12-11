@@ -25,7 +25,9 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <net/if.h>
+#ifndef __HAIKU__
 #include <net/if_arp.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
@@ -46,6 +48,16 @@
 #include <net/ethernet.h>
 #include <net/if_dl.h>
 #include <ifaddrs.h>
+#endif
+
+#ifdef __HAIKU__
+#include <sys/sockio.h>
+#include <net/if_dl.h>
+#include <net/if_types.h>
+#define _BSD_SOURCE
+#include <ifaddrs.h>
+#define IFF_RUNNING IFF_UP
+#define ETHER_ADDR_LEN	6
 #endif
 
 #include "net_util.h"
@@ -149,6 +161,10 @@ static int     getMTU(JNIEnv *env, int sock, const char *ifname);
 #if defined(__solaris__)
 static int     getMacFromDevice(JNIEnv *env, const char *ifname,
                                 unsigned char *retbuf);
+#endif
+
+#ifdef __HAIKU__
+static netif *enumIPvXInterfaces(JNIEnv *env, int sock, netif *ifs, int family);
 #endif
 
 /******************* Java entry points *****************************/
@@ -2140,3 +2156,205 @@ static int getFlags(int sock, const char *ifname, int *flags) {
     return 0;
 }
 #endif /* _ALLBSD_SOURCE */
+
+/** HAIKU **/
+#ifdef __HAIKU__
+#if defined(AF_INET6)
+/*
+ * Opens a socket for further ioctl calls. Tries AF_INET socket first and
+ * if it fails return AF_INET6 socket.
+ */
+static int openSocketWithFallback(JNIEnv *env, const char *ifname) {
+    int sock;
+
+    if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
+        if (errno == EPROTONOSUPPORT) {
+            if ((sock = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
+                NET_ThrowByNameWithLastError
+                    (env, JNU_JAVANETPKG "SocketException", "IPV6 Socket creation failed");
+                return -1;
+            }
+        } else { // errno is not NOSUPPORT
+            NET_ThrowByNameWithLastError
+                (env, JNU_JAVANETPKG "SocketException", "IPV4 Socket creation failed");
+            return -1;
+        }
+    }
+
+    return sock;
+}
+#else
+static int openSocketWithFallback(JNIEnv *env, const char *ifname) {
+    return openSocket(env, AF_INET);
+}
+#endif
+
+/*
+ * Enumerates and returns all IPv4 interfaces on BSD.
+ */
+static netif *enumIPv4Interfaces(JNIEnv *env, int sock, netif *ifs) {
+    struct ifaddrs *ifa, *origifa;
+
+    if (getifaddrs(&origifa) != 0) {
+        NET_ThrowByNameWithLastError
+            (env, JNU_JAVANETPKG "SocketException", "getifaddrs() failed");
+        return ifs;
+    }
+
+    for (ifa = origifa; ifa != NULL; ifa = ifa->ifa_next) {
+        struct sockaddr *broadaddrP = NULL;
+
+        // ignore non IPv4 addresses
+        if (ifa->ifa_addr == NULL || ifa->ifa_addr->sa_family != AF_INET)
+            continue;
+
+        // set ifa_broadaddr, if there is one
+        if ((ifa->ifa_flags & IFF_POINTOPOINT) == 0 &&
+            ifa->ifa_flags & IFF_BROADCAST) {
+            broadaddrP = ifa->ifa_dstaddr;
+        }
+
+        // add interface to the list
+        ifs = addif(env, sock, ifa->ifa_name, ifs, ifa->ifa_addr,
+                    broadaddrP, AF_INET,
+                    translateIPv4AddressToPrefix((struct sockaddr_in *)
+                                                 ifa->ifa_netmask));
+
+        // if an exception occurred then free the list
+        if ((*env)->ExceptionOccurred(env)) {
+            freeifaddrs(origifa);
+            freeif(ifs);
+            return NULL;
+        }
+    }
+
+    // free ifaddrs buffer
+    freeifaddrs(origifa);
+    return ifs;
+}
+
+#if defined(AF_INET6)
+
+/*
+ * Enumerates and returns all IPv6 interfaces on BSD.
+ */
+static netif *enumIPv6Interfaces(JNIEnv *env, int sock, netif *ifs) {
+    struct ifaddrs *ifa, *origifa;
+
+    if (getifaddrs(&origifa) != 0) {
+        NET_ThrowByNameWithLastError
+            (env, JNU_JAVANETPKG "SocketException", "getifaddrs() failed");
+        return ifs;
+    }
+
+    for (ifa = origifa; ifa != NULL; ifa = ifa->ifa_next) {
+        // ignore non IPv6 addresses
+        if (ifa->ifa_addr == NULL || ifa->ifa_addr->sa_family != AF_INET6)
+            continue;
+
+        // set scope ID to interface index
+        ((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_scope_id =
+            getIndex(sock, ifa->ifa_name);
+
+        // add interface to the list
+        ifs = addif(env, sock, ifa->ifa_name, ifs, ifa->ifa_addr, NULL,
+                    AF_INET6,
+                    translateIPv6AddressToPrefix((struct sockaddr_in6 *)
+                                                 ifa->ifa_netmask));
+
+        // if an exception occurred then free the list
+        if ((*env)->ExceptionOccurred(env)) {
+            freeifaddrs(origifa);
+            freeif(ifs);
+            return NULL;
+        }
+    }
+
+    // free ifaddrs buffer
+    freeifaddrs(origifa);
+    return ifs;
+}
+
+#endif /* AF_INET6 */
+
+/*
+ * Try to get the interface index.
+ */
+static int getIndex(int sock, const char *name) {
+    struct ifreq if2;
+    memset((char *)&if2, 0, sizeof(if2));
+    strncpy(if2.ifr_name, name, sizeof(if2.ifr_name) - 1);
+
+    if (ioctl(sock, SIOCGIFINDEX, (char *)&if2) < 0) {
+        return -1;
+    }
+
+    return if2.ifr_index;
+}
+
+/*
+ * Gets the Hardware address (usually MAC address) for the named interface.
+ * On return puts the data in buf, and returns the length, in byte, of the
+ * MAC address. Returns -1 if there is no hardware address on that interface.
+ */
+static int getMacAddress
+  (JNIEnv *env, const char *ifname, const struct in_addr *addr,
+   unsigned char *buf)
+{
+    struct ifaddrs *ifa0, *ifa;
+    struct sockaddr *saddr;
+    int i;
+
+    // grab the interface list
+    if (!getifaddrs(&ifa0)) {
+        // cycle through the interfaces
+        for (i = 0, ifa = ifa0; ifa != NULL; ifa = ifa->ifa_next, i++) {
+            saddr = ifa->ifa_addr;
+            // link layer contains the MAC address
+            if (saddr->sa_family == AF_LINK && !strcmp(ifname, ifa->ifa_name)) {
+                struct sockaddr_dl *sadl = (struct sockaddr_dl *) saddr;
+                // check the address has the correct length
+                if (sadl->sdl_alen == ETHER_ADDR_LEN) {
+                    memcpy(buf, (sadl->sdl_data + sadl->sdl_nlen), ETHER_ADDR_LEN);
+                    freeifaddrs(ifa0);
+                    return ETHER_ADDR_LEN;
+                }
+            }
+        }
+        freeifaddrs(ifa0);
+    }
+
+    return -1;
+}
+
+static int getMTU(JNIEnv *env, int sock, const char *ifname) {
+    struct ifreq if2;
+    memset((char *)&if2, 0, sizeof(if2));
+    strncpy(if2.ifr_name, ifname, sizeof(if2.ifr_name) - 1);
+
+    if (ioctl(sock, SIOCGIFMTU, (char *)&if2) < 0) {
+        NET_ThrowByNameWithLastError
+            (env, JNU_JAVANETPKG "SocketException", "ioctl(SIOCGIFMTU) failed");
+        return -1;
+    }
+
+    return if2.ifr_mtu;
+}
+
+static int getFlags(int sock, const char *ifname, int *flags) {
+    struct ifreq if2;
+    memset((char *)&if2, 0, sizeof(if2));
+    strncpy(if2.ifr_name, ifname, sizeof(if2.ifr_name) - 1);
+
+    if (ioctl(sock, SIOCGIFFLAGS, (char *)&if2) < 0) {
+        return -1;
+    }
+
+    if (sizeof(if2.ifr_flags) == sizeof(short)) {
+        *flags = (if2.ifr_flags & 0xffff);
+    } else {
+        *flags = if2.ifr_flags;
+    }
+    return 0;
+}
+#endif /* __HAIKU__ */

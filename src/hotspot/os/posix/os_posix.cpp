@@ -202,7 +202,7 @@ int os::create_file_for_heap(const char* dir) {
 
 static char* reserve_mmapped_memory(size_t bytes, char* requested_addr) {
   char * addr;
-  int flags = MAP_PRIVATE NOT_AIX( | MAP_NORESERVE ) | MAP_ANONYMOUS;
+  int flags = MAP_PRIVATE NOT_AIX( NOT_HAIKU( | MAP_NORESERVE )) | MAP_ANONYMOUS;
   if (requested_addr != NULL) {
     assert((uintptr_t)requested_addr % os::vm_page_size() == 0, "Requested address should be aligned to OS page size");
     flags |= MAP_FIXED;
@@ -221,6 +221,7 @@ static char* reserve_mmapped_memory(size_t bytes, char* requested_addr) {
   return NULL;
 }
 
+#ifndef __HAIKU__
 static int util_posix_fallocate(int fd, off_t offset, off_t len) {
 #ifdef __APPLE__
   fstore_t store = { F_ALLOCATECONTIG, F_PEOFPOSMODE, 0, len };
@@ -239,13 +240,18 @@ static int util_posix_fallocate(int fd, off_t offset, off_t len) {
   return posix_fallocate(fd, offset, len);
 #endif
 }
+#endif
 
 // Map the given address range to the provided file descriptor.
 char* os::map_memory_to_file(char* base, size_t size, int fd) {
   assert(fd != -1, "File descriptor is not valid");
 
   // allocate space for the file
+#ifdef __HAIKU__
+  int ret = ftruncate(fd, (off_t)size);
+#else
   int ret = util_posix_fallocate(fd, 0, (off_t)size);
+#endif
   if (ret != 0) {
     vm_exit_during_initialization(err_msg("Error in mapping Java heap at the given filesystem directory. error(%d)", ret));
     return NULL;
@@ -384,7 +390,7 @@ void os::Posix::print_rlimit_info(outputStream* st) {
 #if defined(AIX)
   st->print(", NPROC ");
   st->print("%d", sysconf(_SC_CHILD_MAX));
-#elif !defined(SOLARIS)
+#elif !defined(SOLARIS) && !defined(HAIKU)
   st->print(", NPROC ");
   getrlimit(RLIMIT_NPROC, &rlim);
   if (rlim.rlim_cur == RLIM_INFINITY) st->print("infinity");

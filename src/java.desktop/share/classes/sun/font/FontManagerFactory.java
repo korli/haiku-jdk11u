@@ -55,9 +55,11 @@ public final class FontManagerFactory {
             DEFAULT_CLASS = "sun.awt.Win32FontManager";
         } else if (FontUtilities.isMacOSX) {
             DEFAULT_CLASS = "sun.font.CFontManager";
-            } else {
+        } else if (FontUtilities.isHaiku) {
+            DEFAULT_CLASS = "sun.hawt.HaikuFontManager";
+        } else {
             DEFAULT_CLASS = "sun.awt.X11FontManager";
-            }
+        }
     }
 
     /**

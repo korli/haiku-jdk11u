@@ -111,6 +111,14 @@ case "$OS" in
       TMP="/tmp"
       ;;
 
+   Haiku )
+      VAR="A different value for Haiku"
+      DEFAULT_JDK=/
+      FILESEP="/"
+      PATHSEP=":"
+      TMP="/tmp"
+      ;;
+
    # catch all other OSs
    * )
       echo "Unrecognized system!  $OS"
