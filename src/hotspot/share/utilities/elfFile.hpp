@@ -29,6 +29,8 @@
 
 #if defined(__OpenBSD__)
 #include <sys/exec_elf.h>
+#elif defined(HAIKU)
+#include "utilities/elf.h"
 #else
 #include <elf.h>
 #endif

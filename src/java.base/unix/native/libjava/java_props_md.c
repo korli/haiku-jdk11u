@@ -46,7 +46,7 @@
 #include "java_props_macosx.h"
 #endif
 
-#if defined(_ALLBSD_SOURCE)
+#if defined(_ALLBSD_SOURCE) || defined(__HAIKU__)
 #if !defined(P_tmpdir)
 #include <paths.h>
 #define P_tmpdir _PATH_VARTMP
@@ -56,7 +56,7 @@
 #include "locale_str.h"
 #include "java_props.h"
 
-#if !defined(_ALLBSD_SOURCE)
+#if !defined(_ALLBSD_SOURCE) && !defined(__HAIKU__)
 #ifdef __linux__
   #ifndef CODESET
   #define CODESET _NL_CTYPE_CODESET_NAME
@@ -396,13 +396,16 @@ GetJavaProperties(JNIEnv *env)
     sprops.patch_level = "unknown";
 
     /* Java 2D/AWT properties */
-#ifdef MACOSX
+#if defined(MACOSX)
     // Always the same GraphicsEnvironment and Toolkit on Mac OS X
     sprops.graphics_env = "sun.awt.CGraphicsEnvironment";
     sprops.awt_toolkit = "sun.lwawt.macosx.LWCToolkit";
 
     // check if we're in a GUI login session and set java.awt.headless=true if not
     sprops.awt_headless = isInAquaSession() ? NULL : "true";
+#elif defined(__HAIKU__)
+    sprops.graphics_env = "sun.hawt.HaikuGraphicsEnvironment";
+    sprops.awt_toolkit = "sun.hawt.HaikuToolkit";
 #else
     sprops.graphics_env = "sun.awt.X11GraphicsEnvironment";
     sprops.awt_toolkit = "sun.awt.X11.XToolkit";

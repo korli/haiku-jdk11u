@@ -33,6 +33,7 @@
 #define X_LINUX         3
 #define X_BSD           4
 #define X_MACOSX        5
+#define X_HAIKU         6
 
 // **********************************
 // Make sure you set X_PLATFORM defines correctly.
@@ -45,7 +46,7 @@
 
 
 // following is needed for _LP64
-#if ((X_PLATFORM == X_SOLARIS) || (X_PLATFORM == X_LINUX) || (X_PLATFORM == X_MACOSX))
+#if ((X_PLATFORM == X_SOLARIS) || (X_PLATFORM == X_LINUX) || (X_PLATFORM == X_MACOSX) || (X_PLATFORM == X_HAIKU))
 #include <sys/types.h>
 #endif
 
@@ -126,6 +127,11 @@ typedef char            SBYTE;
 
 
 #if (X_PLATFORM == X_BSD) || (X_PLATFORM == X_MACOSX)
+#define INLINE          inline
+#endif
+
+
+#if X_PLATFORM == X_HAIKU
 #define INLINE          inline
 #endif
 

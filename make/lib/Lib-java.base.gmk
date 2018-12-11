@@ -54,6 +54,7 @@ $(eval $(call SetupJdkLibrary, BUILD_LIBNET, \
     LIBS_linux := $(LIBDL) -lpthread, \
     LIBS_solaris := -lnsl -lsocket $(LIBDL), \
     LIBS_aix := $(LIBDL),\
+	LIBS_haiku := -ljvm -ljava -lnetwork, \
     LIBS_windows := ws2_32.lib jvm.lib secur32.lib iphlpapi.lib winhttp.lib \
         delayimp.lib $(WIN_JAVA_LIB) advapi32.lib, \
     LIBS_macosx := -framework CoreFoundation -framework CoreServices, \
@@ -84,6 +85,7 @@ $(eval $(call SetupJdkLibrary, BUILD_LIBNIO, \
     LIBS_aix := $(LIBDL), \
     LIBS_macosx := \
         -framework CoreFoundation -framework CoreServices, \
+    LIBS_haiku := -ljava -lnet -lnetwork -lgnu, \
     LIBS_windows := jvm.lib ws2_32.lib $(WIN_JAVA_LIB) \
         $(SUPPORT_OUTPUTDIR)/native/$(MODULE)/libnet/net.lib \
         advapi32.lib, \

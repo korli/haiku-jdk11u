@@ -178,7 +178,8 @@ const char* Abstract_VM_Version::jre_release_version() {
                  WINDOWS_ONLY("windows")         \
                  SOLARIS_ONLY("solaris")         \
                  AIX_ONLY("aix")                 \
-                 BSD_ONLY("bsd")
+                 BSD_ONLY("bsd")                 \
+                 HAIKU_ONLY("haiku")
 
 #ifndef CPU
 #ifdef ZERO
