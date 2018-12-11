@@ -74,7 +74,7 @@ typedef unsigned int uintptr_t;
 
 #endif // _WIN32
 
-#if defined(LINUX) || defined(_ALLBSD_SOURCE)
+#if defined(LINUX) || defined(_ALLBSD_SOURCE) || defined(HAIKU)
   #include <inttypes.h>
 #endif // LINUX || _ALLBSD_SOURCE
 

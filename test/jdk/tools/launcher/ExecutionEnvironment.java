@@ -66,7 +66,9 @@ public class ExecutionEnvironment extends TestHelper {
             ? "DYLD_LIBRARY_PATH"
             : TestHelper.isAIX
                     ? "LIBPATH"
-                    : "LD_LIBRARY_PATH";
+                    TestHelper.isHaiku
+                        ? "LIBRARY_PATH"
+                        : "LD_LIBRARY_PATH";
     static final String LD_LIBRARY_PATH_32 = LD_LIBRARY_PATH + "_32";
     static final String LD_LIBRARY_PATH_64 = LD_LIBRARY_PATH + "_64";
 

@@ -53,6 +53,11 @@ case "$OS" in
     FS="/"
     RM="/bin/rm -f"
     ;;
+  Haiku )
+    PS=":"
+    FS="/"
+    RM="/bin/rm -f"
+    ;;
   CYGWIN* )
     PS=";"
     FS="/"

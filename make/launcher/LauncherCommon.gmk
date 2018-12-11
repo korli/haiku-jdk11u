@@ -187,11 +187,14 @@ define SetupBuildLauncherBody
           -L$(call FindLibDirForModule, java.base)/jli, \
       LDFLAGS_solaris := $$($1_LDFLAGS_solaris) \
           -L$(call FindLibDirForModule, java.base)/jli, \
+      LDFLAGS_haiku := $$($1_LDFLAGS_haiku) \
+          -L$(SUPPORT_OUTPUTDIR)/modules_libs/java.base/jli, \
       LIBS := $(JDKEXE_LIBS) $$($1_LIBS), \
       LIBS_unix := $$($1_LIBS_unix), \
       LIBS_linux := -lpthread -ljli $(LIBDL), \
       LIBS_macosx := -ljli, \
       LIBS_solaris := -ljli -lthread $(LIBDL), \
+      LIBS_haiku := -ljli, \
       LIBS_windows := $$($1_WINDOWS_JLI_LIB) \
           $(SUPPORT_OUTPUTDIR)/native/java.base/libjava/java.lib advapi32.lib \
           $$($1_LIBS_windows), \

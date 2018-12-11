@@ -145,6 +145,7 @@
 //     GTEST_OS_WINDOWS_PHONE    - Windows Phone
 //     GTEST_OS_WINDOWS_RT       - Windows Store App/WinRT
 //   GTEST_OS_ZOS      - z/OS
+//   GTEST_OS_HAIKU    - Haiku
 //
 // Among the platforms, Cygwin, Linux, Max OS X, and Windows have the
 // most stable support.  Since core members of the Google Test project
@@ -646,7 +647,8 @@ typedef struct _RTL_CRITICAL_SECTION GTEST_CRITICAL_SECTION;
 // to your compiler flags.
 #define GTEST_HAS_PTHREAD                                             \
   (GTEST_OS_LINUX || GTEST_OS_MAC || GTEST_OS_HPUX || GTEST_OS_QNX || \
-   GTEST_OS_FREEBSD || GTEST_OS_NACL || GTEST_OS_NETBSD || GTEST_OS_FUCHSIA)
+   GTEST_OS_FREEBSD || GTEST_OS_NACL || GTEST_OS_NETBSD || GTEST_OS_FUCHSIA || \
+   GTEST_OS_HAIKU)
 #endif  // GTEST_HAS_PTHREAD
 
 #if GTEST_HAS_PTHREAD
@@ -838,7 +840,7 @@ typedef struct _RTL_CRITICAL_SECTION GTEST_CRITICAL_SECTION;
      (GTEST_OS_WINDOWS_DESKTOP && _MSC_VER >= 1400) ||          \
      GTEST_OS_WINDOWS_MINGW || GTEST_OS_AIX || GTEST_OS_HPUX || \
      GTEST_OS_OPENBSD || GTEST_OS_QNX || GTEST_OS_FREEBSD || \
-     GTEST_OS_NETBSD || GTEST_OS_FUCHSIA)
+     GTEST_OS_NETBSD || GTEST_OS_FUCHSIA || GTEST_OS_HAIKU)
 # define GTEST_HAS_DEATH_TEST 1
 #endif
 

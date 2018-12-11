@@ -41,12 +41,14 @@
 #include <sys/proc_info.h>
 #include <libproc.h>
 #endif
-#elif !defined(_AIX)
+#elif defined(__HAIKU__)
+#include <kernel/OS.h>
+#elif !defined(_AIX) && !defined(__HAIKU__)
 #include <sys/swap.h>
 #endif
 #include <sys/resource.h>
 #include <sys/times.h>
-#ifndef _ALLBSD_SOURCE
+#if !defined(_ALLBSD_SOURCE) && !defined(__HAIKU__)
 #include <sys/sysinfo.h>
 #endif
 #include <ctype.h>
@@ -63,7 +65,7 @@
 
 static jlong page_size = 0;
 
-#if defined(_ALLBSD_SOURCE) || defined(_AIX)
+#if defined(_ALLBSD_SOURCE) || defined(_AIX) || defined(__HAIKU__)
 #define MB      (1024UL * 1024UL)
 #else
 
@@ -159,6 +161,18 @@ static jlong get_total_or_available_swap_space_size(JNIEnv* env, jboolean availa
         throw_internal_error(env, "sysctlbyname failed");
     }
     return available ? (jlong)vmusage.xsu_avail : (jlong)vmusage.xsu_total;
+#elif defined(__HAIKU__)
+    jlong total, avail;
+    system_info info;
+
+    status_t result = get_system_info(&info);
+    if (result != B_OK) {
+        throw_internal_error(env, "get_system_info failed");
+    }
+    total = (jlong)info.max_swap_pages * page_size;
+    avail = (jlong)info.free_swap_pages * page_size;
+
+    return available ? avail : total;
 #else /* _ALLBSD_SOURCE */
     /*
      * XXXBSD: there's no way available to get swap info in
@@ -237,6 +251,17 @@ Java_com_sun_management_internal_OperatingSystemImpl_getCommittedVirtualMemorySi
         throw_internal_error(env, "task_info failed");
     }
     return t_info.virtual_size;
+#elif defined(__HAIKU__)
+    jlong total;
+    system_info info;
+
+    status_t result = get_system_info(&info);
+    if (result != B_OK) {
+        throw_internal_error(env, "get_system_info failed");
+    }
+    total = (jlong)info.max_pages * page_size;
+
+    return total - (jlong)info.free_memory;
 #else /* _ALLBSD_SOURCE */
     /*
      * XXXBSD: there's no way available to do it in FreeBSD, AFAIK.
@@ -365,7 +390,9 @@ Java_com_sun_management_internal_OperatingSystemImpl_getTotalPhysicalMemorySize0
 #endif
 }
 
-
+jlong JNICALL
+Java_com_sun_management_internal_OperatingSystemImpl_getMaxFileDescriptorCount0
+  (JNIEnv *env, jobject mbean);
 
 JNIEXPORT jlong JNICALL
 Java_com_sun_management_internal_OperatingSystemImpl_getOpenFileDescriptorCount0
@@ -421,6 +448,18 @@ Java_com_sun_management_internal_OperatingSystemImpl_getOpenFileDescriptorCount0
      */
     // throw_internal_error(env, "Unimplemented in FreeBSD");
     return (100);
+#elif defined(__HAIKU__)
+    long i, fds = 0;
+    long maxfds =
+        Java_com_sun_management_internal_OperatingSystemImpl_getMaxFileDescriptorCount0(env, mbean);
+
+    for (i = 0; i < maxfds; i++) {
+        if (fcntl(i, F_GETFD, 0) == 0 || errno != EBADF) {
+            fds++;
+        }
+    }
+
+    return fds;
 #else /* solaris/linux */
     DIR *dirp;
     struct dirent64* dentp;

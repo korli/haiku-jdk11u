@@ -89,8 +89,11 @@ JNIEXPORT jboolean JNICALL AWTIsHeadless() {
  * Pathnames to the various awt toolkits
  */
 
-#ifdef MACOSX
+#if defined(MACOSX)
   #define LWAWT_PATH "/libawt_lwawt.dylib"
+  #define DEFAULT_PATH LWAWT_PATH
+#elif defined(__HAIKU__)
+  #define LWAWT_PATH "/libawt_lwawt.so"
   #define DEFAULT_PATH LWAWT_PATH
 #else
   #define XAWT_PATH "/libawt_xawt.so"
@@ -134,8 +137,11 @@ AWT_OnLoad(JavaVM *vm, void *reserved)
     fmProp = (*env)->NewStringUTF(env, "sun.font.fontmanager");
     CHECK_EXCEPTION_FATAL(env, "Could not allocate font manager property");
 
-#ifdef MACOSX
+#if defined(MACOSX)
         fmanager = (*env)->NewStringUTF(env, "sun.font.CFontManager");
+        tk = LWAWT_PATH;
+#elif defined(__HAIKU__)
+        fmanager = (*env)->NewStringUTF(env, "sun.hawt.HaikuFontManager");
         tk = LWAWT_PATH;
 #else
         fmanager = (*env)->NewStringUTF(env, "sun.awt.X11FontManager");
@@ -150,7 +156,7 @@ AWT_OnLoad(JavaVM *vm, void *reserved)
         CHECK_EXCEPTION_FATAL(env, "Could not allocate set properties");
     }
 
-#ifndef MACOSX
+#if !defined(MACOSX) && !defined(__HAIKU__)
     if (AWTIsHeadless()) {
         tk = HEADLESS_PATH;
     }

@@ -158,7 +158,7 @@ ifneq ($(OPENJDK_TARGET_OS), windows)
     # This variable is potentially overridden in the closed makefile.
     MAN_SRC_BASEDIR ?= $(TOPDIR)/src
 
-    ifeq ($(OPENJDK_TARGET_OS), linux)
+    ifneq ($(findstring $(OPENJDK_TARGET_OS), linux haiku), )
       MAN_SRC_DIR = $(MAN_SRC_BASEDIR)/linux/doc
       MAN1_SUBDIR = man
     endif
@@ -197,7 +197,7 @@ ifneq ($(OPENJDK_TARGET_OS), windows)
 	$(install-file)
     endif
 
-    ifneq ($(findstring $(OPENJDK_TARGET_OS), linux macosx), )
+    ifneq ($(findstring $(OPENJDK_TARGET_OS), linux macosx haiku), )
       $(JRE_IMAGE_DIR)/man/ja:
 	$(call LogInfo, Creating $(patsubst $(OUTPUTDIR)/%,%,$@))
 	$(CD) $(@D) && $(RM) ja && $(LN) -s ja_JP.UTF-8 ja
@@ -219,7 +219,7 @@ ifneq ($(OPENJDK_TARGET_OS), windows)
           $(addprefix $(JDK_IMAGE_DIR)/man/ja_JP.PCK/man1/, $(JDK_MAN_PAGES))
     endif
 
-    ifneq ($(findstring $(OPENJDK_TARGET_OS), linux macosx), )
+    ifneq ($(findstring $(OPENJDK_TARGET_OS), linux macosx haiku), )
       JRE_MAN_PAGE_LIST = $(addprefix $(JRE_IMAGE_DIR)/man/man1/, $(JRE_MAN_PAGES)) \
           $(addprefix $(JRE_IMAGE_DIR)/man/ja_JP.UTF-8/man1/, $(JRE_MAN_PAGES)) \
           $(JRE_IMAGE_DIR)/man/ja

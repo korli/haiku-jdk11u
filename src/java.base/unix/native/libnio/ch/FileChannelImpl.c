@@ -33,7 +33,7 @@
 #include <sys/sendfile.h>
 #elif defined(_AIX)
 #include <sys/socket.h>
-#elif defined(_ALLBSD_SOURCE)
+#elif defined(_ALLBSD_SOURCE) || defined(__HAIKU__)
 #include <sys/socket.h>
 #include <sys/uio.h>
 #define lseek64 lseek

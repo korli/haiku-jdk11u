@@ -63,6 +63,10 @@ case "$OS" in
     PATHSEP=":"
     FILESEP="/"
     ;;
+  Haiku )
+    PATHSEP=":"
+    FILESEP="/"
+    ;;
   CYGWIN* )
     PATHSEP=";"
     FILESEP="/"

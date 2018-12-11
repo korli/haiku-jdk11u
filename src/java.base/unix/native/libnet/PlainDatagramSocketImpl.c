@@ -2169,7 +2169,7 @@ static void mcast_join_leave(JNIEnv *env, jobject this,
             mname6.ipv6mr_interface = idx;
         }
 
-#if defined(_ALLBSD_SOURCE)
+#if defined(_ALLBSD_SOURCE) || defined(__HAIKU__)
 #define ADD_MEMBERSHIP          IPV6_JOIN_GROUP
 #define DRP_MEMBERSHIP          IPV6_LEAVE_GROUP
 #define S_ADD_MEMBERSHIP        "IPV6_JOIN_GROUP"
