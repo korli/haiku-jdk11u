@@ -210,21 +210,21 @@ static void StartApplication() {
 
 extern "C" {
 
-JNIEnv* AttachToJVM(JavaVM* vm)
+JNIEXPORT JNIEnv* AttachToJVM(JavaVM* vm)
 {
     SharedApplication* app = (SharedApplication*)be_app;
     return app->AttachToJVM(vm);
 }
 
 
-JNIEnv* GetJNIEnv()
+JNIEXPORT JNIEnv* GetJNIEnv()
 {
     SharedApplication* app = (SharedApplication*)be_app;
     return app->GetJNIEnv();
 }
 
 
-status_t RunApplication()
+JNIEXPORT status_t RunApplication()
 {
     pthread_once(&app_started, StartApplication);
     return app_result;
