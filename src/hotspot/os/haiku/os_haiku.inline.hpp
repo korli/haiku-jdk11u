@@ -35,8 +35,8 @@
 #include <netdb.h>
 
 // File names are case-sensitive on windows only
-inline int os::file_name_strcmp(const char* s1, const char* s2) {
-  return strcmp(s1, s2);
+inline int os::file_name_strncmp(const char* s1, const char* s2, size_t num) {
+  return strncmp(s1, s2, num);
 }
 
 inline bool os::obsolete_option(const JavaVMOption *option) {
@@ -86,10 +86,6 @@ inline jlong os::lseek(int fd, jlong offset, int whence) {
 
 inline int os::fsync(int fd) {
   return ::fsync(fd);
-}
-
-inline char* os::native_path(char *path) {
-  return path;
 }
 
 inline int os::ftruncate(int fd, jlong length) {

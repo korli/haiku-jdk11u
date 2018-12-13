@@ -23,17 +23,18 @@
  */
 
 #include "precompiled.hpp"
-#include "runtime/interfaceSupport.hpp"
-#include "runtime/os.hpp"
+#include "logging/log.hpp"
+#include "runtime/interfaceSupport.inline.hpp"
+#include "runtime/os.inline.hpp"
 #include "services/attachListener.hpp"
 #include "services/dtraceAttacher.hpp"
 
-#include <unistd.h>
 #include <signal.h>
-#include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/un.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/un.h>
+#include <unistd.h>
 
 #ifndef UNIX_PATH_MAX
 #define UNIX_PATH_MAX   sizeof(((struct sockaddr_un *)0)->sun_path)
