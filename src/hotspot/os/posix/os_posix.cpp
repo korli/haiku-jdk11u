@@ -1299,6 +1299,8 @@ address os::Posix::ucontext_get_pc(const ucontext_t* ctx) {
    return Linux::ucontext_get_pc(ctx);
 #elif defined(SOLARIS)
    return Solaris::ucontext_get_pc(ctx);
+#elif defined(HAIKU)
+   return Haiku::ucontext_get_pc(ctx);
 #else
    VMError::report_and_die("unimplemented ucontext_get_pc");
 #endif
@@ -1313,6 +1315,8 @@ void os::Posix::ucontext_set_pc(ucontext_t* ctx, address pc) {
    Linux::ucontext_set_pc(ctx, pc);
 #elif defined(SOLARIS)
    Solaris::ucontext_set_pc(ctx, pc);
+#elif defined(HAIKU)
+   Haiku::ucontext_set_pc(ctx, pc);
 #else
    VMError::report_and_die("unimplemented ucontext_get_pc");
 #endif
