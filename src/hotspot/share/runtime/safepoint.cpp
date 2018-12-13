@@ -1134,7 +1134,7 @@ void ThreadSafepointState::print_on(outputStream *st) const {
   }
 
   st->print_cr("Thread: " INTPTR_FORMAT
-              "  [0x%2x] State: %s _has_called_back %d _at_poll_safepoint %d",
+              "  [0x%2lx] State: %s _has_called_back %d _at_poll_safepoint %d",
                p2i(_thread), _thread->osthread()->thread_id(), s, _has_called_back,
                _at_poll_safepoint);
 

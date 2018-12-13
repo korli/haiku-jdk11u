@@ -180,7 +180,7 @@ INT32 MIDI_OUT_SendShortMessage(MidiDeviceHandle* handle, UINT32 packedMsg,
     message[1] = (UBYTE)((packedMsg >> 8) & 0xff); // possible data1
     message[2] = (UBYTE)((packedMsg >> 16) & 0xff); // possible data2
 
-    size_t length = getShortMessageLength((int)message[0]);
+    int length = getShortMessageLength((int)message[0]);
     if (length == -1) {
         return MIDI_INVALID_ARGUMENT;
     }

@@ -44,12 +44,12 @@
 #include "runtime/atomic.hpp"
 #include "runtime/extendedPC.hpp"
 #include "runtime/globals.hpp"
-#include "runtime/interfaceSupport.hpp"
+#include "runtime/interfaceSupport.inline.hpp"
 #include "runtime/java.hpp"
 #include "runtime/javaCalls.hpp"
 #include "runtime/mutexLocker.hpp"
 #include "runtime/objectMonitor.hpp"
-#include "runtime/orderAccess.inline.hpp"
+#include "runtime/orderAccess.hpp"
 #include "runtime/osThread.hpp"
 #include "runtime/perfMemory.hpp"
 #include "runtime/sharedRuntime.hpp"
@@ -468,6 +468,8 @@ static void *thread_native_entry(Thread *thread) {
     assert(Thread::current_or_null_safe() == thread, "current thread is wrong");
     thread->clear_thread_current();
   }
+
+  return 0;
 }
 
 bool os::create_thread(Thread* thread, ThreadType thr_type,
@@ -1042,6 +1044,10 @@ void os::print_dll_info(outputStream *st) {
   }
 }
 
+int os::get_loaded_modules_info(os::LoadedModulesCallbackFunc callback, void *param) {
+  return 0;
+}
+
 void os::get_summary_os_info(char* buf, size_t buflen) {
   // These buffers are small because we want this to be brief
   // and not use a lot of stack while generating the hs_err file.
@@ -1178,7 +1184,7 @@ void os::jvm_path(char *buf, jint buflen) {
         if (0 == access(buf, F_OK)) {
           // Use current module name "libjvm.so"
           len = strlen(buf);
-          snprintf(buf + len, buflen-len, "/hotspot/libjvm.so", p);
+          snprintf(buf + len, buflen-len, "/hotspot/libjvm.so");
         } else {
           // Go back to path of .so
           rp = realpath(dli_fname, buf);
@@ -1226,6 +1232,13 @@ void* os::user_handler() {
   return CAST_FROM_FN_PTR(void*, UserHandler);
 }
 
+static struct timespec create_semaphore_timespec(unsigned int sec, int nsec) {
+  struct timespec ts;
+  unpackTime(&ts, false, (sec * NANOSECS_PER_SEC) + nsec);
+
+  return ts;
+}
+
 extern "C" {
   typedef void (*sa_handler_t)(int);
   typedef void (*sa_sigaction_t)(int, siginfo_t *, void *);
@@ -1269,14 +1282,7 @@ static PosixSemaphore sr_semaphore;
 
 // Use POSIX implementation of semaphores.
 
-struct timespec PosixSemaphore::create_timespec(unsigned int sec, int nsec) {
-  struct timespec ts;
-  unpackTime(&ts, false, (sec * NANOSECS_PER_SEC) + nsec);
-
-  return ts;
-}
-
-void os::signal_init_pd() {
+static void jdk_misc_signal_init() {
   // Initialize signal structures
   ::memset((void*)pending_signals, 0, sizeof(pending_signals));
 
@@ -1289,7 +1295,7 @@ void os::signal_notify(int sig) {
   ::sem_post(&sig_sem);
 }
 
-static int check_pending_signals(bool wait) {
+static int check_pending_signals() {
   Atomic::store(0, &sigint_count);
   for (;;) {
     for (int i = 0; i < NSIG + 1; i++) {
@@ -1297,9 +1303,6 @@ static int check_pending_signals(bool wait) {
       if (n > 0 && n == Atomic::cmpxchg(n - 1, &pending_signals[i], n)) {
         return i;
       }
-    }
-    if (!wait) {
-      return -1;
     }
     JavaThread *thread = JavaThread::current();
     ThreadBlockInVM tbivm(thread);
@@ -1327,12 +1330,8 @@ static int check_pending_signals(bool wait) {
   }
 }
 
-int os::signal_lookup() {
-  return check_pending_signals(false);
-}
-
 int os::signal_wait() {
-  return check_pending_signals(true);
+  return check_pending_signals();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1352,8 +1351,8 @@ int os::vm_allocation_granularity() {
 static void warn_fail_commit_memory(char* addr, size_t size, bool exec,
                                     int err) {
   warning("INFO: os::commit_memory(" PTR_FORMAT ", " SIZE_FORMAT
-          ", %d) failed; error='%s' (errno=%d)", addr, size, exec,
-          strerror(err), err);
+          ", %d) failed; error='%s' (errno=%d)", p2i(addr), size, exec,
+          os::strerror(err), err);
 }
 
 bool os::pd_commit_memory(char* addr, size_t size, bool exec) {
@@ -1373,7 +1372,7 @@ void os::pd_commit_memory_or_exit(char* addr, size_t size, bool exec,
   assert(mesg != NULL, "mesg must be specified");
   if (!pd_commit_memory(addr, size, exec)) {
     warn_fail_commit_memory(addr, size, exec, errno);
-    vm_exit_out_of_memory(size, OOM_MMAP_ERROR, mesg);
+    vm_exit_out_of_memory(size, OOM_MMAP_ERROR, "%s", mesg);
   }
 }
 
@@ -1563,6 +1562,10 @@ char* os::pd_attempt_reserve_memory_at(size_t bytes, char* requested_addr) {
 
 size_t os::read(int fd, void *buf, unsigned int nBytes) {
   return ::read(fd, buf, nBytes);
+}
+
+size_t os::read_at(int fd, void *buf, unsigned int nBytes, jlong offset) {
+  return ::pread(fd, buf, nBytes, offset);
 }
 
 void os::naked_short_sleep(jlong ms) {
@@ -1826,7 +1829,7 @@ static bool do_suspend(OSThread* osthread) {
 
   // managed to send the signal and switch to SUSPEND_REQUEST, now wait for SUSPENDED
   while (true) {
-    if (sr_semaphore.timedwait(0, 2 * NANOSECS_PER_MILLISEC)) {
+    if (sr_semaphore.timedwait(create_semaphore_timespec(0, 2 * NANOSECS_PER_MILLISEC))) {
       break;
     } else {
       // timeout
@@ -1860,7 +1863,7 @@ static void do_resume(OSThread* osthread) {
 
   while (true) {
     if (sr_notify(osthread) == 0) {
-      if (sr_semaphore.timedwait(0, 2 * NANOSECS_PER_MILLISEC)) {
+      if (sr_semaphore.timedwait(create_semaphore_timespec(0, 2 * NANOSECS_PER_MILLISEC))) {
         if (osthread->sr.is_running()) {
           return;
         }
@@ -1905,7 +1908,7 @@ extern "C" JNIEXPORT int
 JVM_handle_haiku_signal(int signo, siginfo_t* siginfo,
                         void* ucontext, int abort_if_unrecognized);
 
-void signalHandler(int sig, siginfo_t* info, void* uc) {
+static void signalHandler(int sig, siginfo_t* info, void* uc) {
   assert(info != NULL && uc != NULL, "it must be old kernel");
   int orig_errno = errno;  // Preserve errno value over signal handler.
   JVM_handle_haiku_signal(sig, info, uc, true);
@@ -2042,8 +2045,8 @@ void os::Haiku::set_signal_handler(int sig, bool set_installed) {
       // libjsig also interposes the sigaction() call below and saves the
       // old sigaction on it own.
     } else {
-      fatal(err_msg("Encountered unexpected pre-existing sigaction handler "
-                    "%#lx for signal %d.", (long)oldhand, sig));
+      fatal("Encountered unexpected pre-existing sigaction handler "
+                    "%#lx for signal %d.", (long)oldhand, sig);
     }
   }
 
@@ -2150,7 +2153,7 @@ jlong os::Haiku::fast_thread_cpu_time(Thread* thread, bool user_sys_cpu_time) {
 
 static const char* get_signal_handler_name(address handler,
                                            char* buf, int buflen) {
-  int offset;
+  int offset = 0;
   bool found = os::dll_address_to_library_name(handler, buf, buflen, &offset);
   if (found) {
     // skip directory names
@@ -2342,8 +2345,8 @@ void os::init(void) {
 
   Haiku::set_page_size(sysconf(_SC_PAGESIZE));
   if (Haiku::page_size() == -1) {
-    fatal(err_msg("os_linux.cpp: os::init: sysconf failed (%s)",
-                  strerror(errno)));
+    fatal("os_haiku.cpp: os::init: sysconf failed (%s)",
+          os::strerror(errno));
   }
   init_page_sizes((size_t) Haiku::page_size());
 
@@ -2377,6 +2380,10 @@ jint os::init_2(void)
 
   Haiku::signal_sets_init();
   Haiku::install_signal_handlers();
+  // Initialize data for jdk.internal.misc.Signal
+  if (!ReduceSignalUsage) {
+    jdk_misc_signal_init();
+  }
 
   // Check and sets minimum stack sizes against command line options
   if (Posix::set_minimum_stack_sizes() == JNI_ERR) {
@@ -2473,12 +2480,12 @@ bool os::find(address addr, outputStream* st) {
   Dl_info dlinfo;
   memset(&dlinfo, 0, sizeof(dlinfo));
   if (dladdr(addr, &dlinfo) != 0) {
-    st->print(PTR_FORMAT ": ", addr);
+    st->print(PTR_FORMAT ": ", p2i(addr));
     if (dlinfo.dli_sname != NULL && dlinfo.dli_saddr != NULL) {
-      st->print("%s+%#x", dlinfo.dli_sname,
-                 addr - (intptr_t)dlinfo.dli_saddr);
+      st->print("%s+%#lx", dlinfo.dli_sname,
+                 p2i(addr) - p2i(dlinfo.dli_saddr));
     } else if (dlinfo.dli_fbase != NULL) {
-      st->print("<offset %#x>", addr - (intptr_t)dlinfo.dli_fbase);
+      st->print("<offset %#lx>", p2i(addr) - p2i(dlinfo.dli_fbase));
     } else {
       st->print("<absolute address>");
     }
@@ -2486,7 +2493,7 @@ bool os::find(address addr, outputStream* st) {
       st->print(" in %s", dlinfo.dli_fname);
     }
     if (dlinfo.dli_fbase != NULL) {
-      st->print(" at " PTR_FORMAT, dlinfo.dli_fbase);
+      st->print(" at " PTR_FORMAT, p2i(dlinfo.dli_fbase));
     }
     st->cr();
 
@@ -2569,16 +2576,6 @@ bool os::message_box(const char* title, const char* message) {
   while (::read(0, buf, sizeof(buf)) <= 0) { ::sleep(100); }
 
   return buf[0] == 'y' || buf[0] == 'Y';
-}
-
-int os::stat(const char *path, struct stat *sbuf) {
-  char pathbuf[MAX_PATH];
-  if (strlen(path) > MAX_PATH - 1) {
-    errno = ENAMETOOLONG;
-    return -1;
-  }
-  os::native_path(strcpy(pathbuf, path));
-  return ::stat(pathbuf, sbuf);
 }
 
 int local_vsnprintf(char* buf, size_t count, const char* format, va_list args) {
@@ -2916,11 +2913,6 @@ int os::fork_and_exec(char* cmd) {
        return status;
     }
   }
-}
-
-// The JRE is always headful on Haiku
-bool os::is_headless_jre() {
-    return false;
 }
 
 // Get the default path to the core file
