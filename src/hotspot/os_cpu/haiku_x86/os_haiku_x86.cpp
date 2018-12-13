@@ -38,7 +38,7 @@
 #include "runtime/arguments.hpp"
 #include "runtime/extendedPC.hpp"
 #include "runtime/frame.inline.hpp"
-#include "runtime/interfaceSupport.hpp"
+#include "runtime/interfaceSupport.inline.hpp"
 #include "runtime/java.hpp"
 #include "runtime/javaCalls.hpp"
 #include "runtime/mutexLocker.hpp"
@@ -113,6 +113,10 @@ void os::initialize_thread(Thread* thr) {
 
 address os::Haiku::ucontext_get_pc(const ucontext_t * uc) {
   return (address)uc->uc_mcontext.REG_PC;
+}
+
+void os::Haiku::ucontext_set_pc(ucontext_t* uc, address pc) {
+  uc->uc_mcontext.REG_PC = (unsigned long)pc;
 }
 
 intptr_t* os::Haiku::ucontext_get_sp(const ucontext_t * uc) {
@@ -316,8 +320,8 @@ JVM_handle_haiku_signal(int sig,
     pc = (address) os::Haiku::ucontext_get_pc(uc);
 
     if (StubRoutines::is_safefetch_fault(pc)) {
-      uc->uc_mcontext.REG_PC = intptr_t(StubRoutines::continuation_for_safefetch_fault(pc));
-      return 1 ;
+      os::Haiku::ucontext_set_pc(uc, StubRoutines::continuation_for_safefetch_fault(pc));
+      return true;
     }
 
     // Handle ALL stack overflow variations here
@@ -700,7 +704,7 @@ void os::print_context(outputStream *st, const void *context) {
   st->cr();
 
   intptr_t *sp = (intptr_t *)os::Haiku::ucontext_get_sp(uc);
-  st->print_cr("Top of Stack: (sp=" PTR_FORMAT ")", sp);
+  st->print_cr("Top of Stack: (sp=" PTR_FORMAT ")", p2i(sp));
   print_hex_dump(st, (address)sp, (address)(sp + 8*sizeof(intptr_t)), sizeof(intptr_t));
   st->cr();
 
@@ -708,7 +712,7 @@ void os::print_context(outputStream *st, const void *context) {
   // point to garbage if entry point in an nmethod is corrupted. Leave
   // this at the end, and hope for the best.
   address pc = os::Haiku::ucontext_get_pc(uc);
-  st->print_cr("Instructions: (pc=" PTR_FORMAT ")", pc);
+  st->print_cr("Instructions: (pc=" PTR_FORMAT ")", p2i(pc));
   print_hex_dump(st, pc - 32, pc + 32, sizeof(char));
 }
 

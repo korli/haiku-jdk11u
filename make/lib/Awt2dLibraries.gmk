@@ -842,7 +842,6 @@ ifeq ($(ENABLE_HEADLESS_ONLY), false)
         -framework Cocoa \
         -framework JavaNativeFoundation
   else ifeq ($(OPENJDK_TARGET_OS), haiku)
-    LIBSPLASHSCREEN_LDFLAGS := -L$(INSTALL_LIBRARIES_HERE)
     LIBSPLASHSCREEN_LIBS += -lhaikuapp -lbe -lstdc++ -liconv
   else ifeq ($(OPENJDK_TARGET_OS), windows)
     LIBSPLASHSCREEN_LIBS += kernel32.lib user32.lib gdi32.lib delayimp.lib $(WIN_JAVA_LIB) jvm.lib
@@ -883,6 +882,7 @@ ifeq ($(ENABLE_HEADLESS_ONLY), false)
       LDFLAGS := $(LDFLAGS_JDKLIB) \
           $(call SET_SHARED_LIBRARY_ORIGIN), \
       LDFLAGS_macosx := -L$(INSTALL_LIBRARIES_HERE), \
+      LDFLAGS_haiku := -L$(INSTALL_LIBRARIES_HERE), \
       LDFLAGS_windows := -delayload:user32.dll, \
       LIBS := $(JDKLIB_LIBS) $(LIBSPLASHSCREEN_LIBS) $(LIBZ_LIBS) \
           $(GIFLIB_LIBS) $(LIBJPEG_LIBS) $(PNG_LIBS), \
@@ -971,66 +971,39 @@ endif
 
 ifeq ($(OPENJDK_TARGET_OS), haiku)
 
-  LIBAWT_LWAWT_FILES := \
-      AwtApplication.cpp \
-      ContentView.cpp \
-      Drawable.cpp \
-      HaikuClipboard.cpp \
-      HaikuCursorManager.cpp \
-      HaikuDesktopPeer.cpp \
-      HaikuDragSourceContextPeer.cpp \
-      HaikuDropTargetContextPeer.cpp \
-      HaikuFileDialog.cpp \
-      HaikuFontManager.cpp \
-      HaikuGraphicsConfig.cpp \
-      HaikuGraphicsDevice.cpp \
-      HaikuGraphicsEnvironment.cpp \
-      HaikuJawt.cpp \
-      HaikuMenuComponent.cpp \
-      HaikuMouseInfo.cpp \
-      HaikuPlatformWindow.cpp \
-      HaikuRobot.cpp \
-      HaikuToolkit.cpp \
-      HaikuTrayIcon.cpp \
-      HaikuWindowSurfaceData.cpp \
-      Utilities.cpp \
-      \
-      AccelGlyphCache.c
+  LIBAWT_LWAWT_EXTRA_SRC := \
+      $(TOPDIR)/src/$(MODULE)/share/native/common/font \
+      #
 
-  LIBAWT_LWAWT_DIRS := \
-      $(TOPDIR)/src/java.desktop/haiku/native/libawt_lwawt/awt \
-      $(TOPDIR)/src/java.desktop/haiku/native/libawt_lwawt/font \
-      $(TOPDIR)/src/java.desktop/share/native/common/font
+  LIBAWT_LWAWT_EXTRA_HEADER_DIRS := \
+      $(LIBAWT_DEFAULT_HEADER_DIRS) \
+      libawt_lwawt/awt \
+      libawt_lwawt/font \
+      libawt_lwawt/java2d \
+      include \
+      common/awt/debug \
+      common/java2d \
+      libhaikuapp \
+      #
 
-  $(eval $(call SetupNativeCompilation,BUILD_LIBAWT_LWAWT, \
-      LIBRARY := awt_lwawt, \
-      OUTPUT_DIR := $(INSTALL_LIBRARIES_HERE), \
-      SRC := $(LIBAWT_LWAWT_DIRS), \
+  LIBAWT_LWAWT_CFLAGS :=
+
+  $(eval $(call SetupJdkLibrary, BUILD_LIBAWT_LWAWT, \
+      NAME := awt_lwawt, \
+      EXTRA_SRC := $(LIBAWT_LWAWT_EXTRA_SRC), \
       LANG := C++, \
       INCLUDE_FILES := $(LIBAWT_LWAWT_FILES), \
       OPTIMIZATION := LOW, \
       DISABLED_WARNINGS_gcc := deprecated, \
       CFLAGS := $(CFLAGS_JDKLIB) \
-          $(foreach dir, $(LIBAWT_LWAWT_DIRS), -I$(dir)) \
-          -I$(SUPPORT_OUTPUTDIR)/headers/java.desktop \
-          -I$(TOPDIR)/src/java.desktop/haiku/native/include \
-          -I$(TOPDIR)/src/java.desktop/haiku/native/libhaikuapp \
-          -I$(TOPDIR)/src/java.desktop/share/native/common/java2d \
-          -I$(TOPDIR)/src/java.desktop/share/native/common/java2d \
-          -I$(TOPDIR)/src/java.desktop/share/native/common/awt/debug \
-          -I$(TOPDIR)/src/java.desktop/share/native/include \
-          -I$(TOPDIR)/src/java.desktop/share/native/libawt/awt/image \
-          -I$(TOPDIR)/src/java.desktop/share/native/libawt/awt/image/cvutils \
-          -I$(TOPDIR)/src/java.desktop/share/native/libawt/java2d/loops \
-          -I$(TOPDIR)/src/java.desktop/share/native/libawt/java2d/pipe \
-          -I$(TOPDIR)/src/java.desktop/share/native/libawt/java2d, \
+          $(LIBAWT_LWAWT_CFLAGS), \
+      EXTRA_HEADER_DIRS := $(LIBAWT_LWAWT_EXTRA_HEADER_DIRS), \
       LDFLAGS := $(LDFLAGS_JDKLIB) \
           $(call SET_SHARED_LIBRARY_ORIGIN) \
           -L$(INSTALL_LIBRARIES_HERE), \
       LIBS := -lawt -lmlib_image -lhaikuapp -ljvm \
           -ljava -lbe -ltracker -lstdc++, \
-      OBJECT_DIR := $(JDK_OUTPUTDIR)/objs/libawt_lwawt, \
-      DEBUG_SYMBOLS := $(DEBUG_ALL_BINARIES)))
+  ))
 
   TARGETS += $(BUILD_LIBAWT_LWAWT)
 
@@ -1038,7 +1011,7 @@ ifeq ($(OPENJDK_TARGET_OS), haiku)
 
   $(BUILD_LIBAWT_LWAWT): $(BUILD_LIBMLIB_IMAGE)
 
-  $(BUILD_LIBAWT_LWAWT): $(BUILD_LIBHAIKUAPP)
+  $(BUILD_LIBAWT_LWAWT): $(call FindLib, $(MODULE), haikuapp)
 
   $(BUILD_LIBAWT_LWAWT): $(call FindLib, java.base, java)
 
