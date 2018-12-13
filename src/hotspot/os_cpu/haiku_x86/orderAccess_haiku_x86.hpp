@@ -25,9 +25,7 @@
 #ifndef OS_CPU_HAIKU_X86_VM_ORDERACCESS_HAIKU_X86_INLINE_HPP
 #define OS_CPU_HAIKU_X86_VM_ORDERACCESS_HAIKU_X86_INLINE_HPP
 
-#include "runtime/atomic.hpp"
-#include "runtime/orderAccess.hpp"
-#include "runtime/os.hpp"
+// Included in orderAccess.hpp header file.
 
 // A compiler barrier, forcing the C++ compiler to invalidate all memory assumptions
 static inline void compiler_barrier() {
@@ -62,7 +60,6 @@ inline void OrderAccess::fence() {
 
 template<>
 struct OrderAccess::PlatformOrderedStore<1, RELEASE_X_FENCE>
-  VALUE_OBJ_CLASS_SPEC
 {
   template <typename T>
   void operator()(T v, volatile T* p) const {
@@ -75,7 +72,6 @@ struct OrderAccess::PlatformOrderedStore<1, RELEASE_X_FENCE>
 
 template<>
 struct OrderAccess::PlatformOrderedStore<2, RELEASE_X_FENCE>
-  VALUE_OBJ_CLASS_SPEC
 {
   template <typename T>
   void operator()(T v, volatile T* p) const {
@@ -88,7 +84,6 @@ struct OrderAccess::PlatformOrderedStore<2, RELEASE_X_FENCE>
 
 template<>
 struct OrderAccess::PlatformOrderedStore<4, RELEASE_X_FENCE>
-  VALUE_OBJ_CLASS_SPEC
 {
   template <typename T>
   void operator()(T v, volatile T* p) const {
@@ -102,7 +97,6 @@ struct OrderAccess::PlatformOrderedStore<4, RELEASE_X_FENCE>
 #ifdef AMD64
 template<>
 struct OrderAccess::PlatformOrderedStore<8, RELEASE_X_FENCE>
-  VALUE_OBJ_CLASS_SPEC
 {
   template <typename T>
   void operator()(T v, volatile T* p) const {
