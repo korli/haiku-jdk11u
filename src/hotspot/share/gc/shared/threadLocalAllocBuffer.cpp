@@ -157,7 +157,7 @@ void ThreadLocalAllocBuffer::resize() {
 
   size_t aligned_new_size = align_object_size(new_size);
 
-  log_trace(gc, tlab)("TLAB new size: thread: " INTPTR_FORMAT " [id: %2ld]"
+  log_trace(gc, tlab)("TLAB new size: thread: " INTPTR_FORMAT " [id: " OSTHREADID_FORMAT2 "]"
                       " refills %d  alloc: %8.6f desired_size: " SIZE_FORMAT " -> " SIZE_FORMAT,
                       p2i(myThread()), myThread()->osthread()->thread_id(),
                       _target_refills, _allocation_fraction.average(), desired_size(), aligned_new_size);
@@ -292,7 +292,7 @@ void ThreadLocalAllocBuffer::print_stats(const char* tag) {
   size_t waste = _gc_waste + _slow_refill_waste + _fast_refill_waste;
   double waste_percent = percent_of(waste, _allocated_size);
   size_t tlab_used  = Universe::heap()->tlab_used(thrd);
-  log.trace("TLAB: %s thread: " INTPTR_FORMAT " [id: %2ld]"
+  log.trace("TLAB: %s thread: " INTPTR_FORMAT " [id: " OSTHREADID_FORMAT2 "]"
             " desired_size: " SIZE_FORMAT "KB"
             " slow allocs: %d  refill waste: " SIZE_FORMAT "B"
             " alloc:%8.5f %8.0fKB refills: %d waste %4.1f%% gc: %dB"

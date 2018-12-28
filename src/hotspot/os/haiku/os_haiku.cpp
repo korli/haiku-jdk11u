@@ -457,8 +457,8 @@ static void *thread_native_entry(Thread *thread) {
   // call one more level start routine
   thread->run();
 
-  log_info(os, thread)("Thread finished (tid: " UINTX_FORMAT ", kernel thread id: " UINTX_FORMAT ").",
-    os::current_thread_id(), find_thread(NULL));
+  log_info(os, thread)("Thread finished (tid: " UINTX_FORMAT ", kernel thread "
+    "id: " OSTHREADID_FORMAT ").", os::current_thread_id(), find_thread(NULL));
 
   // If a thread has not deleted itself ("delete this") as part of its
   // termination sequence, we have to ensure thread-local-storage is
