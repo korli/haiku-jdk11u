@@ -1555,8 +1555,10 @@ char* os::pd_attempt_reserve_memory_at(size_t bytes, char* requested_addr) {
   	return addr;
   }
 
-  int result = anon_munmap(addr, bytes);
-  assert(result, "munmap failed");
+  if (addr != NULL) {
+    int result = anon_munmap(addr, bytes);
+    assert(result, "munmap failed");
+  }
   return NULL;
 }
 
