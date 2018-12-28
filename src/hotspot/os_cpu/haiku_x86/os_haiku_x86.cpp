@@ -568,7 +568,7 @@ JVM_handle_haiku_signal(int sig,
     // save all thread context in case we need to restore it
     if (thread != NULL) thread->set_saved_exception_pc(pc);
 
-    uc->uc_mcontext.REG_PC = (long unsigned int)stub;
+    os::Haiku::ucontext_set_pc(uc, stub);
     return true;
   }
 
