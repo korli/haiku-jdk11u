@@ -722,7 +722,7 @@ void VMError::report(outputStream* st, bool _verbose) {
      if (_verbose && _thread && (_thread->is_Named_thread())) {
        JavaThread*  jt = ((NamedThread *)_thread)->processed_thread();
        if (jt != NULL) {
-         st->print_cr("JavaThread " PTR_FORMAT " (nid = %ld) was being processed", p2i(jt), jt->osthread()->thread_id());
+         st->print_cr("JavaThread " PTR_FORMAT " (nid = " OSTHREADID_FORMAT ") was being processed", p2i(jt), jt->osthread()->thread_id());
          print_stack_trace(st, jt, buf, sizeof(buf), true);
        }
      }

@@ -944,7 +944,7 @@ void Thread::print_on_error(outputStream* st, char* buf, int buflen) const {
             p2i(stack_end()), p2i(stack_base()));
 
   if (osthread()) {
-    st->print(" [id=%ld]", osthread()->thread_id());
+    st->print(" [id=" OSTHREADID_FORMAT "]", osthread()->thread_id());
   }
 
   ThreadsSMRSupport::print_info_on(this, st);
@@ -2957,7 +2957,7 @@ void JavaThread::print_on_error(outputStream* st, char *buf, int buflen) const {
   st->print(" [");
   st->print("%s", _get_thread_state_name(_thread_state));
   if (osthread()) {
-    st->print(", id=%ld", osthread()->thread_id());
+    st->print(", id=" OSTHREADID_FORMAT, osthread()->thread_id());
   }
   st->print(", stack(" PTR_FORMAT "," PTR_FORMAT ")",
             p2i(stack_end()), p2i(stack_base()));

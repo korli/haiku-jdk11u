@@ -65,6 +65,13 @@
 #define USE_STDERR JNI_TRUE     /* we usually print to stderr */
 #define USE_STDOUT JNI_FALSE
 
+#ifdef __HAIKU__
+#include <SupportDefs.h>
+#define PID_FORMAT "%" B_PRId32
+#else
+#define PID_FORMAT "%ld"
+#endif
+
 static jboolean printVersion = JNI_FALSE; /* print and exit */
 static jboolean showVersion = JNI_FALSE;  /* print but continue */
 static jboolean printUsage = JNI_FALSE;   /* print and exit*/
@@ -850,7 +857,7 @@ SetJvmEnvironment(int argc, char **argv) {
                  */
                 char * pbuf = (char*)JLI_MemAlloc(pbuflen);
 
-                JLI_Snprintf(pbuf, pbuflen, "%s%ld=%s", NMT_Env_Name, JLI_GetPid(), value);
+                JLI_Snprintf(pbuf, pbuflen, "%s" PID_FORMAT "=%s", NMT_Env_Name, JLI_GetPid(), value);
                 retval = JLI_PutEnv(pbuf);
                 if (JLI_IsTraceLauncher()) {
                     char* envName;
@@ -858,7 +865,7 @@ SetJvmEnvironment(int argc, char **argv) {
 
                     // ensures that malloc successful
                     envName = (char*)JLI_MemAlloc(pbuflen);
-                    JLI_Snprintf(envName, pbuflen, "%s%ld", NMT_Env_Name, JLI_GetPid());
+                    JLI_Snprintf(envName, pbuflen, "%s" PID_FORMAT, NMT_Env_Name, JLI_GetPid());
 
                     printf("TRACER_MARKER: NativeMemoryTracking: env var is %s\n",envName);
                     printf("TRACER_MARKER: NativeMemoryTracking: putenv arg %s\n",pbuf);
