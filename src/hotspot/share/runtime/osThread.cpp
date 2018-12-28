@@ -39,7 +39,7 @@ OSThread::~OSThread() {
 
 // Printing
 void OSThread::print_on(outputStream *st) const {
-  st->print("nid=0x%lx ", thread_id());
+  st->print("nid=0x" OSTHREADID_FORMAT_HEX " ", thread_id());
   switch (_state) {
     case ALLOCATED:               st->print("allocated ");                 break;
     case INITIALIZED:             st->print("initialized ");               break;
