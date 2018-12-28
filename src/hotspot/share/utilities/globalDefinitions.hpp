@@ -109,6 +109,17 @@
 #define INTX_FORMAT_W(width)  "%" #width PRIdPTR
 #define UINTX_FORMAT_W(width) "%" #width PRIuPTR
 
+#ifdef HAIKU
+#define OSTHREADID_FORMAT     INT32_FORMAT
+#define OSTHREADID_FORMAT2    INT32_FORMAT_W(2)
+#define OSTHREADID_FORMAT_HEX "%" PRIx32
+#define OSTHREADID_FORMAT_HEX2 PTR32_FORMAT_W(2)
+#else
+#define OSTHREADID_FORMAT     "%ld"
+#define OSTHREADID_FORMAT2    "%2ld"
+#define OSTHREADID_FORMAT_HEX "%lx"
+#define OSTHREADID_FORMAT_HEX2 "%2lx"
+#endif
 //----------------------------------------------------------------------------------------------------
 // Constants
 
