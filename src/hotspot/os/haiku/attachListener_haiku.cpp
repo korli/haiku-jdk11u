@@ -137,6 +137,10 @@ class ArgumentIterator : public StackObj {
   }
   char* next() {
     if (*_pos == '\0') {
+      // advance the iterator if possible (null arguments)
+      if (_pos < _end) {
+        _pos += 1;
+      }
       return NULL;
     }
     char* res = _pos;
@@ -195,6 +199,7 @@ int HaikuAttachListener::init() {
 
   // bind socket
   struct sockaddr_un addr;
+  memset((void *)&addr, 0, sizeof(addr));
   addr.sun_family = AF_UNIX;
   strcpy(addr.sun_path, initial_path);
   ::unlink(initial_path);
@@ -255,6 +260,8 @@ HaikuAttachOperation* HaikuAttachListener::read_request(int s) {
   do {
     int n;
     RESTARTABLE(read(s, buf+off, left), n);
+    assert(n <= left, "buffer was too small, impossible!");
+    buf[max_len - 1] = '\0';
     if (n == -1) {
       return NULL;      // reset by peer or other error
     }
