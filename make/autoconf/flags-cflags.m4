@@ -500,16 +500,22 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS_HELPER],
   fi
 
   if test "x$TOOLCHAIN_TYPE" = xgcc; then
-    TOOLCHAIN_CFLAGS_JVM="$TOOLCHAIN_CFLAGS_JVM -fcheck-new -fstack-protector"
-    TOOLCHAIN_CFLAGS_JDK="-pipe -fstack-protector"
-    # reduce lib size on s390x in link step, this needs also special compile flags
-    if test "x$OPENJDK_TARGET_CPU" = xs390x; then
-      TOOLCHAIN_CFLAGS_JVM="$TOOLCHAIN_CFLAGS_JVM -ffunction-sections -fdata-sections"
-      TOOLCHAIN_CFLAGS_JDK="$TOOLCHAIN_CFLAGS_JDK -ffunction-sections -fdata-sections"
+    if test "x$OPENJDK_TARGET_OS" != xhaiku; then
+      TOOLCHAIN_CFLAGS_JVM="$TOOLCHAIN_CFLAGS_JVM -fcheck-new -fstack-protector"
+      TOOLCHAIN_CFLAGS_JDK="-pipe -fstack-protector"
+    else
+      TOOLCHAIN_CFLAGS_JVM="$TOOLCHAIN_CFLAGS_JVM -fcheck-new"
+      TOOLCHAIN_CFLAGS_JDK="-pipe"
     fi
-    # technically NOT for CXX (but since this gives *worse* performance, use
-    # no-strict-aliasing everywhere!)
-    TOOLCHAIN_CFLAGS_JDK_CONLY="-fno-strict-aliasing"
+    TOOLCHAIN_CFLAGS_JDK_CONLY="-fno-strict-aliasing" # technically NOT for CXX (but since this gives *worse* performance, use no-strict-aliasing everywhere!)
+
+    CXXSTD_CXXFLAG="-std=gnu++98"
+    FLAGS_CXX_COMPILER_CHECK_ARGUMENTS(ARGUMENT: [$CXXSTD_CXXFLAG -Werror],
+    						 IF_FALSE: [CXXSTD_CXXFLAG=""])
+    TOOLCHAIN_CFLAGS_JDK_CXXONLY="$CXXSTD_CXXFLAG"
+    TOOLCHAIN_CFLAGS_JVM="$TOOLCHAIN_CFLAGS_JVM $CXXSTD_CXXFLAG"
+    ADLC_CXXFLAG="$CXXSTD_CXXFLAG"
+
 
   elif test "x$TOOLCHAIN_TYPE" = xclang; then
     # Restrict the debug information created by Clang to avoid
