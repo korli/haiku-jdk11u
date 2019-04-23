@@ -34,6 +34,7 @@ extern "C" {
 #include <MediaRoster.h>
 #include <MidiRoster.h>
 
+#include <pthread.h>
 #include <stdlib.h>
 
 #include <vector>
