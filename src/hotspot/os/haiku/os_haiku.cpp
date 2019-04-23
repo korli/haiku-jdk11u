@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1999, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1618,7 +1618,8 @@ void os::naked_yield() {
 // not the entire user process, and user level threads are 1:1 mapped to kernel
 // threads. It has always been the case, but could change in the future. For
 // this reason, the code should not be used as default (ThreadPriorityPolicy=0).
-// It is only used when ThreadPriorityPolicy=1 and requires root privilege.
+// It is only used when ThreadPriorityPolicy=1 and may require system level permission
+// (e.g., root privilege or CAP_SYS_NICE capability).
 
 int os::java_to_os_priority[CriticalPriority + 1] = {
    1,              // 0 Entry should never be used
@@ -1638,6 +1639,22 @@ int os::java_to_os_priority[CriticalPriority + 1] = {
  110,              // 10 MaxPriority
  120,              // 11 CriticalPriority
 };
+
+static int prio_init() {
+  if (ThreadPriorityPolicy == 1) {
+    if (geteuid() != 0) {
+      if (!FLAG_IS_DEFAULT(ThreadPriorityPolicy)) {
+        warning("-XX:ThreadPriorityPolicy=1 may require system level permission, " \
+                "e.g., being the root user. If the necessary permission is not " \
+                "possessed, changes to priority will be silently ignored.");
+      }
+    }
+  }
+  if (UseCriticalJavaThreadPriority) {
+    os::java_to_os_priority[MaxPriority] = os::java_to_os_priority[CriticalPriority];
+  }
+  return 0;
+}
 
 OSReturn os::set_native_priority(Thread* thread, int newpri) {
   if ( !UseThreadPriorities || ThreadPriorityPolicy == 0 ) return OS_OK;
@@ -2427,6 +2444,9 @@ jint os::init_2(void)
       warning("os::init_2 atexit(perfMemory_exit_helper) failed");
     }
   }
+
+  // initialize thread priority policy
+  prio_init();
 
   return JNI_OK;
 }
