@@ -107,10 +107,6 @@ char* os::non_memory_address_word() {
   return (char*) -1;
 }
 
-void os::initialize_thread(Thread* thr) {
-// Nothing to do.
-}
-
 address os::Haiku::ucontext_get_pc(const ucontext_t * uc) {
   return (address)uc->uc_mcontext.REG_PC;
 }
