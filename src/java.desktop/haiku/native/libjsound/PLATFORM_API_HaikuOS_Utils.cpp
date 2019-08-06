@@ -107,7 +107,7 @@ AudioDeviceCache::_Refresh()
     if (roster->GetAudioMixer(&audioMixer) == B_OK) {
         info.node = audioMixer;
         const char mixerName[] = "System Mixer";
-        strncpy(info.name, mixerName, sizeof(mixerName));
+        strncpy(info.name, mixerName, sizeof(info.name));
         nodes.push_back(info);
     }
 }
