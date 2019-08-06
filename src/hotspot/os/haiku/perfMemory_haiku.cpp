@@ -95,7 +95,7 @@ static void save_memory_to_file(char* addr, size_t size) {
 
   int result;
 
-  RESTARTABLE(::open(destfile, O_CREAT|O_WRONLY|O_TRUNC, S_IREAD|S_IWRITE),
+  RESTARTABLE(os::open(destfile, O_CREAT|O_WRONLY|O_TRUNC, S_IRUSR|S_IWUSR),
               result);;
   if (result == OS_ERR) {
     if (PrintMiscellaneous && Verbose) {
@@ -801,7 +801,7 @@ static int create_sharedmem_resources(const char* dirname, const char* filename,
   // Cannot use O_TRUNC here; truncation of an existing file has to happen
   // after the is_file_secure() check below.
   int result;
-  RESTARTABLE(::open(filename, O_RDWR|O_CREAT|O_NOFOLLOW, S_IREAD|S_IWRITE), result);
+  RESTARTABLE(os::open(filename, O_RDWR|O_CREAT|O_NOFOLLOW, S_IRUSR|S_IWUSR), result);
   if (result == OS_ERR) {
     if (PrintMiscellaneous && Verbose) {
       if (errno == ELOOP) {
@@ -879,7 +879,7 @@ static int open_sharedmem_file(const char* filename, int oflags, TRAPS) {
 
   // open the file
   int result;
-  RESTARTABLE(::open(filename, oflags), result);
+  RESTARTABLE(os::open(filename, oflags, 0), result);
   if (result == OS_ERR) {
     if (errno == ENOENT) {
       THROW_MSG_(vmSymbols::java_lang_IllegalArgumentException(),
