@@ -105,7 +105,7 @@ $(eval $(call SetupJdkLibrary, BUILD_LIBJAVA, \
     jdk_util.c_CFLAGS := $(VERSION_CFLAGS), \
     EXTRA_HEADER_DIRS := libfdlibm, \
     WARNINGS_AS_ERRORS_xlc := false, \
-    DISABLED_WARNINGS_gcc := unused-result, \
+    DISABLED_WARNINGS_gcc := unused-result stringop-truncation, \
     DISABLED_WARNINGS_solstudio := E_STATEMENT_NOT_REACHED, \
     LDFLAGS := $(LDFLAGS_JDKLIB) \
         $(call SET_SHARED_LIBRARY_ORIGIN), \
@@ -169,6 +169,7 @@ $(eval $(call SetupJdkLibrary, BUILD_LIBJIMAGE, \
     CFLAGS := $(CFLAGS_JDKLIB), \
     CXXFLAGS := $(CXXFLAGS_JDKLIB), \
     CFLAGS_unix := -UDEBUG, \
+    DISABLED_WARNINGS_gcc := stringop-truncation stringop-overflow, \
     LDFLAGS := $(LDFLAGS_JDKLIB) $(LDFLAGS_CXX_JDK) \
         $(call SET_SHARED_LIBRARY_ORIGIN), \
     LIBS_unix := -ljvm $(LIBCXX), \
@@ -247,7 +248,7 @@ $(eval $(call SetupJdkLibrary, BUILD_LIBJLI, \
     EXTRA_FILES := $(LIBJLI_EXTRA_FILES), \
     OPTIMIZATION := HIGH, \
     CFLAGS := $(CFLAGS_JDKLIB) $(LIBJLI_CFLAGS), \
-    DISABLED_WARNINGS_gcc := unused-function implicit-fallthrough, \
+    DISABLED_WARNINGS_gcc := cast-function-type, \
     DISABLED_WARNINGS_solstudio := \
         E_ASM_DISABLES_OPTIMIZATION \
         E_STATEMENT_NOT_REACHED, \
