@@ -159,6 +159,7 @@ $(eval $(call SetupNativeCompilation, BUILD_LIBJVM, \
     vm_version.cpp_CXXFLAGS := $(CFLAGS_VM_VERSION), \
     arguments.cpp_CXXFLAGS := $(CFLAGS_VM_VERSION), \
     DISABLED_WARNINGS_clang := tautological-compare, \
+    DISABLED_WARNINGS_gcc := stringop-overflow, \
     DISABLED_WARNINGS_solstudio := $(DISABLED_WARNINGS_solstudio), \
     DISABLED_WARNINGS_xlc := 1540-0216 1540-0198 1540-1090 1540-1639 \
         1540-1088 1500-010, \
