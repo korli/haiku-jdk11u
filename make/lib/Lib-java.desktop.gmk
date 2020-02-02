@@ -156,7 +156,7 @@ ifeq ($(OPENJDK_TARGET_OS), haiku)
       NAME := haikuapp, \
       LANG := C++, \
       OPTIMIZATION := LOW, \
-      CFLAGS := $(CFLAGS_JDKLIB), \
+      CFLAGS := -w $(CFLAGS_JDKLIB), \
       LDFLAGS := $(LDFLAGS_JDKLIB) \
           $(call SET_SHARED_LIBRARY_ORIGIN), \
       LIBS := -lbe -lstdc++, \
