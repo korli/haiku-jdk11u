@@ -34,7 +34,7 @@ import java.io.IOException;
  * Haiku implementation of FileSystemProvider
  */
 
-public class HaikuFileSystemProvider extends UnixFileSystemProvider {
+class HaikuFileSystemProvider extends UnixFileSystemProvider {
     public HaikuFileSystemProvider() {
         super();
     }
