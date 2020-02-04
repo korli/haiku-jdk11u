@@ -34,19 +34,14 @@ class Haiku {
   friend class os;
 
   // For signal-chaining
-#define MAXSIGNUM 32
-  static struct sigaction sigact[MAXSIGNUM]; // saved preinstalled sigactions
-  static unsigned int sigs;             // mask of signals that have
-                                        // preinstalled signal handlers
   static bool libjsig_is_loaded;        // libjsig that interposes sigaction(),
                                         // __sigaction(), signal() is loaded
   static struct sigaction *(*get_signal_action)(int);
-  static struct sigaction *get_preinstalled_handler(int);
-  static void save_preinstalled_handler(int, struct sigaction&);
 
   static void check_signal_handler(int sig);
 
   // For signal flags diagnostics
+#define MAXSIGNUM 32
   static int sigflags[MAXSIGNUM];
  protected:
 
