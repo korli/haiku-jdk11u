@@ -2328,20 +2328,21 @@ static int getMacAddress
         // cycle through the interfaces
         for (i = 0, ifa = ifa0; ifa != NULL; ifa = ifa->ifa_next, i++) {
             saddr = ifa->ifa_addr;
-            // link layer contains the MAC address
-            if (saddr->sa_family == AF_LINK && !strcmp(ifname, ifa->ifa_name)) {
-                struct sockaddr_dl *sadl = (struct sockaddr_dl *) saddr;
-                // check the address has the correct length
-                if (sadl->sdl_alen == ETHER_ADDR_LEN) {
-                    memcpy(buf, (sadl->sdl_data + sadl->sdl_nlen), ETHER_ADDR_LEN);
-                    freeifaddrs(ifa0);
-                    return ETHER_ADDR_LEN;
+            if (saddr != NULL) {
+                // link layer contains the MAC address
+                if (saddr->sa_family == AF_LINK && !strcmp(ifname, ifa->ifa_name)) {
+                    struct sockaddr_dl *sadl = (struct sockaddr_dl *) saddr;
+                    // check the address has the correct length
+                    if (sadl->sdl_alen == ETHER_ADDR_LEN) {
+                        memcpy(buf, (sadl->sdl_data + sadl->sdl_nlen), ETHER_ADDR_LEN);
+                        freeifaddrs(ifa0);
+                        return ETHER_ADDR_LEN;
+                    }
                 }
             }
         }
         freeifaddrs(ifa0);
     }
-
     return -1;
 }
 
