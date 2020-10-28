@@ -30,6 +30,7 @@
 
 #include "java_net_SocketOutputStream.h"
 
+#undef min
 #define min(a, b)       ((a) < (b) ? (a) : (b))
 
 /*
